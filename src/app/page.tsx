@@ -1,12 +1,19 @@
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { CategoryPills } from "@/components/discovery/category-pills";
 import { CityCard } from "@/components/discovery/city-card";
 import { EventRow } from "@/components/discovery/event-row";
 import { HeroDiscover } from "@/components/discovery/hero-discover";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { isClerkConfigured } from "@/lib/auth/config";
 import { categories, cities, eventRows, moreCities } from "@/lib/mock-data";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const userId = isClerkConfigured() ? (await auth()).userId : null;
+
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
@@ -20,19 +27,43 @@ export default function Home() {
             <a href="#cities" className="hover:text-[color:var(--foreground)]">Cities</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/events/new"
-              className="focus-ring rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5"
-            >
-              Create
-            </Link>
+            {userId ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="focus-ring rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5"
+                >
+                  Dashboard
+                </Link>
+                <div className="hidden sm:block">
+                  <UserButton />
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/dashboard/events/new"
+                  className="focus-ring rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5"
+                >
+                  Create
+                </Link>
+              </>
+            )}
             <ThemeToggle />
             <button type="button" aria-label="Help" className="focus-ring hidden size-10 place-items-center rounded-full bg-[color:var(--card)] text-sm font-black text-[color:var(--foreground)] sm:grid">
               ?
             </button>
-            <Link href="/dashboard" aria-label="Profile" className="focus-ring grid size-10 place-items-center rounded-full bg-gradient-to-br from-rose-neon to-lime-mute text-xs font-black text-zinc-950">
-              AB
-            </Link>
+            {!userId && (
+              <Link href="/dashboard" aria-label="Profile" className="focus-ring grid size-10 place-items-center rounded-full bg-gradient-to-br from-rose-neon to-lime-mute text-xs font-black text-zinc-950">
+                AB
+              </Link>
+            )}
           </div>
         </div>
       </header>

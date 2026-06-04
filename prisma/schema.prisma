@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  name      String?
+  email     String?  @unique
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events Event[]
+
+  @@index([clerkId])
+  @@index([email])
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  hostId        String
+  host          User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  title         String
+  slug          String   @unique
+  description   String?
+  eventDate     DateTime
+  eventTime     String
+  location      String
+  coverImage    String?
+  visibility    String   @default("public")
+  theme         String   @default("Mehfil")
+  category      String?
+  city          String?
+  capacity      Int?
+  allowPlusOne  Boolean  @default(true)
+  upiId         String?
+  paymentNote   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rsvps        RSVP[]
+  activities   EventActivity[]
+  datePolls    DatePoll[]
+  memoryPhotos MemoryPhoto[]
+
+  @@index([hostId])
+  @@index([slug])
+  @@index([city])
+  @@index([category])
+}
+
+model RSVP {
+  id            String        @id @default(cuid())
+  eventId       String
+  event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name          String
+  email         String?
+  phone         String?
+  status        RSVPStatus
+  plusOne       Boolean       @default(false)
+  note          String?
+  paymentStatus PaymentStatus @default(NOT_REQUIRED)
+  checkedIn     Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([eventId])
+}
+
+model EventActivity {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+}
+
+model DatePoll {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  question  String
+  createdAt DateTime @default(now())
+
+  options PollOption[]
+
+  @@index([eventId])
+}
+
+model PollOption {
+  id         String   @id @default(cuid())
+  pollId     String
+  poll       DatePoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionDate DateTime
+  label      String?
+  createdAt  DateTime @default(now())
+
+  votes PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id         String     @id @default(cuid())
+  optionId   String
+  option     PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  guestName  String
+  guestPhone String?
+  createdAt  DateTime   @default(now())
+
+  @@index([optionId])
+}
+
+model MemoryPhoto {
+  id         String   @id @default(cuid())
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  imageUrl   String
+  caption    String?
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([eventId])
+}
+
+enum RSVPStatus {
+  GOING
+  MAYBE
+  NOT_GOING
+}
+
+enum PaymentStatus {
+  NOT_REQUIRED
+  PENDING
+  PAID
+}

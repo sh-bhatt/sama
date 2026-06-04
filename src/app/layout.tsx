@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { isClerkConfigured } from "@/lib/auth/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,6 +27,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const content = <ThemeProvider>{children}</ThemeProvider>;
   const themeScript = `
     try {
       const stored = localStorage.getItem('sama-theme');
@@ -39,11 +43,20 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <Script id="sama-theme-script" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
+      </head>
       <body className="min-h-full flex flex-col">
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <ThemeProvider>{children}</ThemeProvider>
+        {isClerkConfigured() ? (
+          <ClerkProvider>{content}</ClerkProvider>
+        ) : (
+          content
+        )}
       </body>
     </html>
   );

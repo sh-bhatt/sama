@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { HostChecklist } from "@/components/dashboard/host-checklist";
 import { MomentumCard } from "@/components/dashboard/momentum-card";
 import { PulseCard } from "@/components/dashboard/pulse-card";
@@ -6,9 +8,55 @@ import { RecentRsvps } from "@/components/dashboard/recent-rsvps";
 import { EventCard } from "@/components/discovery/event-card";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { isClerkConfigured } from "@/lib/auth/config";
 import { dashboardStats, demoEvent, hostEvents, recentActivity } from "@/lib/mock-data";
 
-export default function DashboardPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DashboardPage() {
+  if (!isClerkConfigured()) {
+    return (
+      <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+              Clerk setup needed
+            </p>
+            <h1 className="theme-heading mt-3 text-4xl font-black lowercase">
+              connect auth to open the dashboard
+            </h1>
+            <p className="theme-muted mt-4 font-semibold leading-7">
+              Add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY to
+              your local environment. Public pages still work without them.
+            </p>
+            <Link
+              href="/"
+              className="focus-ring theme-action mt-6 inline-flex rounded-full px-5 py-3 font-black"
+            >
+              Back to discovery
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  await auth.protect();
+
+  const userResult = await getCurrentUser();
+  const primaryEmail =
+    userResult.clerkUser?.emailAddresses.find(
+      (email) => email.id === userResult.clerkUser?.primaryEmailAddressId,
+    )?.emailAddress ??
+    userResult.clerkUser?.emailAddresses[0]?.emailAddress ??
+    null;
+  const displayName =
+    userResult.dbUser?.name ||
+    userResult.clerkUser?.firstName ||
+    primaryEmail?.split("@")[0] ||
+    "host";
+
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
@@ -18,6 +66,7 @@ export default function DashboardPage() {
             <Link href="/dashboard/events/new" className="focus-ring theme-action rounded-full px-4 py-2 text-sm font-black">
               Create event
             </Link>
+            <UserButton />
             <ThemeToggle />
           </div>
         </div>
@@ -30,7 +79,7 @@ export default function DashboardPage() {
               your events, your crowd, your city
             </p>
             <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
-              good evening, aarav.
+              good evening, {displayName}.
             </h1>
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
               Host the room, send the link, watch the guest list wake up.
@@ -47,6 +96,30 @@ export default function DashboardPage() {
             </article>
           ))}
         </div>
+
+        {userResult.status === "database-not-configured" && (
+          <section className="theme-panel rounded-[1.5rem] border p-5">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+              database setup pending
+            </p>
+            <p className="theme-muted mt-2 font-semibold leading-7">
+              Add DATABASE_URL for Neon, then run Prisma generate and db push.
+              The dashboard stays static until Phase 2B connects real events.
+            </p>
+          </section>
+        )}
+
+        {userResult.status === "database-error" && (
+          <section className="theme-panel rounded-[1.5rem] border p-5">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+              database sync failed
+            </p>
+            <p className="theme-muted mt-2 font-semibold leading-7">
+              Clerk auth is active, but Sama could not upsert the local user.
+              Check DATABASE_URL and run Prisma setup before connecting real data.
+            </p>
+          </section>
+        )}
 
         <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-6">
