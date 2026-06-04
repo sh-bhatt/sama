@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
+import { CopyLinkButton } from "@/components/copy-link-button";
 import { HostChecklist } from "@/components/dashboard/host-checklist";
 import { MomentumCard } from "@/components/dashboard/momentum-card";
 import { PulseCard } from "@/components/dashboard/pulse-card";
@@ -10,7 +12,9 @@ import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured } from "@/lib/auth/config";
+import { formatDateTimeLabel, isUpcomingEvent } from "@/lib/date";
 import { dashboardStats, demoEvent, hostEvents, recentActivity } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +60,37 @@ export default async function DashboardPage() {
     userResult.clerkUser?.firstName ||
     primaryEmail?.split("@")[0] ||
     "host";
+  const realEvents =
+    userResult.status === "ready" && userResult.dbUser
+      ? await prisma.event.findMany({
+          where: { hostId: userResult.dbUser.id },
+          orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
+          include: { _count: { select: { rsvps: true } } },
+        })
+      : [];
+  const totalRsvps = realEvents.reduce((total, event) => total + event._count.rsvps, 0);
+  const realStats =
+    userResult.status === "ready"
+      ? [
+          { label: "live events", value: String(realEvents.length), detail: "saved invites" },
+          {
+            label: "guest energy",
+            value: String(totalRsvps),
+            detail: "RSVPs connect in Phase 2C",
+          },
+          {
+            label: "upcoming",
+            value: String(realEvents.filter((event) => isUpcomingEvent(event.eventDate)).length),
+            detail: "rooms ahead",
+          },
+          { label: "check-ins", value: "0", detail: "opens in Phase 2C" },
+        ]
+      : dashboardStats;
+  const headerList = await headers();
+  const origin =
+    headerList.get("x-forwarded-host") || headerList.get("host")
+      ? `${headerList.get("x-forwarded-proto") || "http"}://${headerList.get("x-forwarded-host") || headerList.get("host")}`
+      : "http://localhost:3000";
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
@@ -88,7 +123,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {dashboardStats.map((stat) => (
+          {realStats.map((stat) => (
             <article key={stat.label} className="theme-panel min-w-0 rounded-[1.5rem] border p-5">
               <p className="theme-muted text-sm font-black uppercase tracking-[0.14em]">{stat.label}</p>
               <p className="theme-heading mt-3 text-4xl font-black">{stat.value}</p>
@@ -126,15 +161,85 @@ export default async function DashboardPage() {
             <section className="min-w-0">
               <div className="mb-4 flex min-w-0 flex-col items-start justify-between gap-2 sm:flex-row sm:items-end sm:gap-4">
                 <h2 className="theme-heading min-w-0 text-4xl font-black lowercase">upcoming events</h2>
-                <Link href="/invite/demo" className="shrink-0 text-sm font-black text-lime-mute">open demo</Link>
+                <Link href="/dashboard/events/new" className="shrink-0 text-sm font-black text-lime-mute">create invite</Link>
               </div>
-              <div className="min-w-0 max-w-full overflow-hidden">
-                <div className="scroll-row flex max-w-full gap-4 overflow-x-auto px-1 pb-8 pt-3">
-                  {hostEvents.map((event) => (
-                    <EventCard key={event.title} event={event} size="dashboard" />
-                  ))}
+
+              {userResult.status === "ready" && realEvents.length === 0 ? (
+                <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+                    no gatherings yet
+                  </p>
+                  <h3 className="theme-heading mt-3 text-4xl font-black lowercase">
+                    create your first invite
+                  </h3>
+                  <p className="theme-muted mt-3 max-w-xl font-semibold leading-7">
+                    Start with a poster, save the details, and Sama will give you
+                    a public invite link to share.
+                  </p>
+                  <Link
+                    href="/dashboard/events/new"
+                    className="focus-ring theme-action mt-5 inline-flex rounded-full px-5 py-3 font-black"
+                  >
+                    Create your first invite
+                  </Link>
                 </div>
-              </div>
+              ) : userResult.status === "ready" ? (
+                <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                  {realEvents.map((event) => {
+                    const inviteUrl = `${origin}/invite/${event.slug}`;
+
+                    return (
+                      <article
+                        key={event.id}
+                        className="theme-panel tilt-card min-w-0 overflow-hidden rounded-[1.75rem] border"
+                      >
+                        <div className="film-grain relative min-h-44 bg-gradient-to-br from-fuchsia-950 via-rose-600 to-lime-mute p-5">
+                          <span className="rounded-full bg-ivory px-3 py-1 text-xs font-black text-zinc-950">
+                            {event.category || event.theme}
+                          </span>
+                          <h3 className="absolute bottom-5 left-5 right-5 text-3xl font-black lowercase leading-none text-white">
+                            {event.title}
+                          </h3>
+                        </div>
+                        <div className="space-y-4 p-5">
+                          <p className="theme-heading text-sm font-black">
+                            {formatDateTimeLabel(event.eventDate, event.eventTime)}
+                          </p>
+                          <p className="theme-muted text-sm font-semibold">
+                            {event.city ? `${event.city} - ` : ""}
+                            {event.location}
+                          </p>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-lime-mute">
+                              {event._count.rsvps} RSVPs
+                            </span>
+                            <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-rose-neon">
+                              {event.visibility}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <CopyLinkButton value={inviteUrl} />
+                            <Link
+                              href={`/dashboard/events/${event.id}`}
+                              className="focus-ring theme-action rounded-full px-4 py-2 text-sm font-black"
+                            >
+                              Manage
+                            </Link>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="min-w-0 max-w-full overflow-hidden">
+                  <div className="scroll-row flex max-w-full gap-4 overflow-x-auto px-1 pb-8 pt-3">
+                    {hostEvents.map((event) => (
+                      <EventCard key={event.title} event={event} size="dashboard" />
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
 
             <section className="min-w-0">

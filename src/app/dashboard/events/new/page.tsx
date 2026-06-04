@@ -1,13 +1,72 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { createEventAction } from "@/app/dashboard/events/new/actions";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { studioThemes } from "@/lib/mock-data";
 
 const inputClass =
   "focus-ring mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 font-bold text-[color:var(--foreground)] placeholder:text-[color:var(--muted)]";
 
-export default function NewEventPage() {
+type NewEventPageProps = {
+  searchParams: Promise<{ error?: string }>;
+};
+
+export const dynamic = "force-dynamic";
+
+export default async function NewEventPage({ searchParams }: NewEventPageProps) {
+  const { error } = await searchParams;
+
+  if (!isClerkConfigured()) {
+    return (
+      <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+              Clerk setup needed
+            </p>
+            <h1 className="theme-heading mt-3 text-4xl font-black lowercase">
+              connect auth to create invites
+            </h1>
+            <p className="theme-muted mt-4 font-semibold leading-7">
+              Add Clerk keys to your local environment before opening the event studio.
+            </p>
+            <Link href="/" className="focus-ring theme-action mt-6 inline-flex rounded-full px-5 py-3 font-black">
+              Back to discovery
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  await auth.protect();
+
+  if (!isDatabaseConfigured()) {
+    return (
+      <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+              database setup needed
+            </p>
+            <h1 className="theme-heading mt-3 text-4xl font-black lowercase">
+              connect Neon to save invites
+            </h1>
+            <p className="theme-muted mt-4 font-semibold leading-7">
+              Add DATABASE_URL, then run npx prisma generate and npx prisma db push.
+            </p>
+            <Link href="/dashboard" className="focus-ring theme-action mt-6 inline-flex rounded-full px-5 py-3 font-black">
+              Back to dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="dark-stage min-h-screen text-foreground">
+    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
@@ -28,29 +87,50 @@ export default function NewEventPage() {
             Build a poster first. Add date, place, RSVP, and the small things that make people show up.
           </p>
 
-          <form className="mt-8 space-y-5">
+          {error && (
+            <div className="mt-6 rounded-2xl border border-rose-neon/30 bg-rose-neon/10 px-4 py-3 text-sm font-black text-rose-neon">
+              {error}
+            </div>
+          )}
+
+          <form action={createEventAction} className="mt-8 space-y-5">
             <section className="theme-panel rounded-[2rem] border p-5 sm:p-7">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">event details</p>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <label className="sm:col-span-2">
                   <span className="theme-muted text-sm font-black">Event title</span>
-                  <input className={inputClass} placeholder="Moonlit Mehfil" />
+                  <input name="title" required minLength={3} className={inputClass} placeholder="Moonlit Mehfil" />
                 </label>
                 <label className="sm:col-span-2">
                   <span className="theme-muted text-sm font-black">Description</span>
-                  <textarea className={`${inputClass} resize-none`} rows={4} placeholder="A short note with a little personality." />
+                  <textarea name="description" className={`${inputClass} resize-none`} rows={4} placeholder="A short note with a little personality." />
                 </label>
                 <label>
                   <span className="theme-muted text-sm font-black">Date</span>
-                  <input type="date" className={inputClass} />
+                  <input name="eventDate" type="date" required className={inputClass} />
                 </label>
                 <label>
                   <span className="theme-muted text-sm font-black">Time</span>
-                  <input type="time" className={inputClass} />
+                  <input name="eventTime" type="time" required className={inputClass} />
                 </label>
                 <label className="sm:col-span-2">
                   <span className="theme-muted text-sm font-black">Location</span>
-                  <input className={inputClass} placeholder="The Courtyard Cafe, Delhi" />
+                  <input name="location" required className={inputClass} placeholder="The Courtyard Cafe, Delhi" />
+                </label>
+                <label>
+                  <span className="theme-muted text-sm font-black">City</span>
+                  <input name="city" className={inputClass} placeholder="Delhi NCR" />
+                </label>
+                <label>
+                  <span className="theme-muted text-sm font-black">Category</span>
+                  <input name="category" className={inputClass} placeholder="Music" />
+                </label>
+                <label className="sm:col-span-2">
+                  <span className="theme-muted text-sm font-black">Visibility</span>
+                  <select name="visibility" defaultValue="public" className={inputClass}>
+                    <option value="public">Public</option>
+                    <option value="private">Private link</option>
+                  </select>
                 </label>
               </div>
             </section>
@@ -59,17 +139,23 @@ export default function NewEventPage() {
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">mood selector</p>
               <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {studioThemes.map((theme, index) => (
-                  <button
+                  <label
                     key={theme.name}
-                    type="button"
                     className={[
                       "focus-ring rounded-2xl border p-2 text-left transition hover:-translate-y-0.5",
                       index === 0 ? "border-lime-mute bg-black/20" : "border-[color:var(--border)] bg-[color:var(--card)]",
                     ].join(" ")}
                   >
+                    <input
+                      type="radio"
+                      name="theme"
+                      value={theme.name}
+                      defaultChecked={index === 0}
+                      className="sr-only"
+                    />
                     <span className={`block h-16 rounded-xl bg-gradient-to-br ${theme.gradient}`} />
                     <span className="theme-heading mt-2 block text-sm font-black">{theme.name}</span>
-                  </button>
+                  </label>
                 ))}
               </div>
             </section>
@@ -79,21 +165,28 @@ export default function NewEventPage() {
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="theme-muted text-sm font-black">Capacity</span>
-                  <input type="number" className={inputClass} placeholder="120" />
+                  <input name="capacity" type="number" min={1} className={inputClass} placeholder="120" />
                 </label>
                 <label>
                   <span className="theme-muted text-sm font-black">UPI ID optional</span>
-                  <input className={inputClass} placeholder="host@upi" />
+                  <input name="upiId" className={inputClass} placeholder="host@upi" />
                 </label>
                 <label className="sm:col-span-2">
                   <span className="theme-muted text-sm font-black">Payment note optional</span>
-                  <input className={inputClass} placeholder="INR 499 at venue" />
+                  <input name="paymentNote" className={inputClass} placeholder="INR 499 at venue" />
+                </label>
+                <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+                  <span>
+                    <span className="theme-heading block font-black">Allow plus one</span>
+                    <span className="theme-muted block text-sm font-semibold">Guests can ask to bring someone along.</span>
+                  </span>
+                  <input name="allowPlusOne" type="checkbox" defaultChecked className="size-5 accent-lime-mute" />
                 </label>
               </div>
             </section>
 
-            <button type="button" className="focus-ring w-full rounded-2xl bg-lime-mute px-5 py-4 font-black text-zinc-950">
-              Preview invite
+            <button type="submit" className="focus-ring w-full rounded-2xl bg-lime-mute px-5 py-4 font-black text-zinc-950">
+              Create invite
             </button>
           </form>
         </div>

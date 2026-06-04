@@ -1,0 +1,63 @@
+import { z } from "zod";
+
+const optionalText = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().optional(),
+);
+
+const optionalPositiveInteger = z.preprocess(
+  (value) => {
+    if (typeof value !== "string" || value.trim() === "") {
+      return undefined;
+    }
+
+    return Number(value);
+  },
+  z.number().int().positive().optional(),
+);
+
+export const eventInputSchema = z.object({
+  title: z.string().trim().min(3, "Title must be at least 3 characters."),
+  description: optionalText,
+  eventDate: z
+    .string()
+    .trim()
+    .min(1, "Event date is required.")
+    .refine((value) => !Number.isNaN(Date.parse(`${value}T00:00:00.000Z`)), {
+      message: "Use a valid event date.",
+    }),
+  eventTime: z.string().trim().min(1, "Event time is required."),
+  location: z.string().trim().min(1, "Location is required."),
+  city: optionalText,
+  category: optionalText,
+  theme: optionalText,
+  visibility: z.enum(["public", "private"]).default("public"),
+  capacity: optionalPositiveInteger,
+  allowPlusOne: z.preprocess((value) => value === "on" || value === "true", z.boolean()),
+  upiId: optionalText,
+  paymentNote: optionalText,
+});
+
+export type EventInput = z.infer<typeof eventInputSchema>;
+
+export function parseEventFormData(formData: FormData) {
+  return eventInputSchema.safeParse({
+    title: formData.get("title"),
+    description: formData.get("description"),
+    eventDate: formData.get("eventDate"),
+    eventTime: formData.get("eventTime"),
+    location: formData.get("location"),
+    city: formData.get("city"),
+    category: formData.get("category"),
+    theme: formData.get("theme"),
+    visibility: formData.get("visibility") || "public",
+    capacity: formData.get("capacity"),
+    allowPlusOne: formData.get("allowPlusOne"),
+    upiId: formData.get("upiId"),
+    paymentNote: formData.get("paymentNote"),
+  });
+}
+
+export function eventDateStringToDate(value: string) {
+  return new Date(`${value}T00:00:00.000Z`);
+}
