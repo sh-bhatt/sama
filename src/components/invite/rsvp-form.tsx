@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { submitRsvpAction } from "@/app/invite/[slug]/actions";
 import {
   initialRsvpActionState,
@@ -19,6 +20,7 @@ const statusOptions = [
 ] as const;
 
 export function RsvpForm({ slug, goingFull }: RsvpFormProps) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<RsvpActionState, FormData>(
     submitRsvpAction,
     initialRsvpActionState,
@@ -26,6 +28,12 @@ export function RsvpForm({ slug, goingFull }: RsvpFormProps) {
   const [selectedStatus, setSelectedStatus] = useState<"GOING" | "MAYBE" | "NOT_GOING">(
     goingFull ? "MAYBE" : "GOING",
   );
+
+  useEffect(() => {
+    if (state.status === "success") {
+      router.refresh();
+    }
+  }, [router, state.status, state.message]);
 
   return (
     <section id="rsvp-form" className="rounded-[2rem] border border-white/10 bg-zinc-950 p-5 shadow-[0_22px_80px_rgba(0,0,0,0.5)]">

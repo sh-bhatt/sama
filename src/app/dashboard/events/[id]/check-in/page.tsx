@@ -2,13 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
-import { checkInRsvpByIdAction } from "@/app/dashboard/events/[id]/actions";
+import { QrCheckInButton } from "@/components/dashboard/qr-check-in-button";
 import { QrCodeCard } from "@/components/qr/qr-code-card";
+import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { formatEventDate } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
+import { eventChannel } from "@/lib/realtime/events";
 
 type CheckInPageProps = {
   params: Promise<{ id: string }>;
@@ -139,6 +141,13 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
               {formatEventDate(event.eventDate)} - {event.eventTime} - {event.location}
             </p>
+            <div className="mt-5">
+              <RealtimeRefresh
+                channels={[eventChannel(event.id)]}
+                enabled={Boolean(process.env.ABLY_API_KEY)}
+                label="check-in live"
+              />
+            </div>
           </section>
 
           <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
@@ -183,16 +192,7 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-2">
-                        <form action={checkInRsvpByIdAction}>
-                          <input type="hidden" name="rsvpId" value={rsvp.id} />
-                          <button
-                            type="submit"
-                            disabled={rsvp.checkedIn}
-                            className="focus-ring rounded-full bg-lime-mute px-4 py-2 text-sm font-black text-zinc-950 disabled:opacity-55"
-                          >
-                            {rsvp.checkedIn ? "Already in" : "Check in"}
-                          </button>
-                        </form>
+                        <QrCheckInButton rsvpId={rsvp.id} checkedIn={rsvp.checkedIn} />
                         <Link
                           href={checkInUrl}
                           className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"

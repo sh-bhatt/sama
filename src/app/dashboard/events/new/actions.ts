@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { prisma } from "@/lib/prisma";
+import { publishEventUpdate } from "@/lib/realtime/ably-server";
+import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
 import { generateUniqueEventSlug } from "@/lib/slug";
 import { eventDateStringToDate, parseEventFormData } from "@/lib/validations/event";
 
@@ -51,6 +53,15 @@ export async function createEventAction(formData: FormData) {
       paymentNote: input.paymentNote,
     },
   });
+  await publishEventUpdate(
+    [eventChannel(event.id), inviteChannel(event.slug), dashboardChannel(event.hostId)],
+    {
+      type: "EVENT_UPDATED",
+      eventId: event.id,
+      slug: event.slug,
+      message: "Event created",
+    },
+  );
 
   redirect(`/dashboard/events/${event.id}`);
 }

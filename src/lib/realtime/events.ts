@@ -1,0 +1,36 @@
+export const realtimeMessageName = "sama:event-update";
+
+export const realtimeEventTypes = [
+  "RSVP_CREATED",
+  "RSVP_UPDATED",
+  "RSVP_DELETED",
+  "CHECK_IN_UPDATED",
+  "PAYMENT_UPDATED",
+  "POLL_CREATED",
+  "POLL_DELETED",
+  "POLL_VOTE_CREATED",
+  "EVENT_UPDATED",
+  "EVENT_DELETED",
+] as const;
+
+export type RealtimeEventType = (typeof realtimeEventTypes)[number];
+
+export type RealtimeEventPayload = {
+  type: RealtimeEventType;
+  eventId: string;
+  slug?: string;
+  message?: string;
+  timestamp: string;
+};
+
+export function eventChannel(eventId: string) {
+  return `event:${eventId}`;
+}
+
+export function dashboardChannel(userId: string) {
+  return `dashboard:${userId}`;
+}
+
+export function inviteChannel(slug: string) {
+  return `invite:${slug}`;
+}

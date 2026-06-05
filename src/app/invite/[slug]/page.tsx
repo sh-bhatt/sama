@@ -6,6 +6,8 @@ import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { PublicGuestPreview } from "@/components/invite/public-guest-preview";
 import { RsvpForm } from "@/components/invite/rsvp-form";
 import { RsvpSummary } from "@/components/invite/rsvp-summary";
+import { PublicDatePoll } from "@/components/polls/public-date-poll";
+import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isDatabaseConfigured } from "@/lib/auth/config";
@@ -13,6 +15,7 @@ import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
 import { demoEvent, recentActivity } from "@/lib/mock-data";
 import { prisma } from "@/lib/prisma";
+import { eventChannel, inviteChannel } from "@/lib/realtime/events";
 import { createWhatsAppShareUrl } from "@/lib/whatsapp";
 
 type InvitePageProps = {
@@ -110,6 +113,16 @@ export default async function InvitePage({ params }: InvitePageProps) {
         orderBy: { createdAt: "desc" },
         take: 4,
       },
+      datePolls: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: {
+          options: {
+            orderBy: { optionDate: "asc" },
+            include: { _count: { select: { votes: true } } },
+          },
+        },
+      },
     },
   });
 
@@ -137,6 +150,14 @@ export default async function InvitePage({ params }: InvitePageProps) {
         .slice(0, 5)
         .map((rsvp) => rsvp.name.slice(0, 2).toUpperCase())
     : ["RI", "KA", "AN", "DV"];
+  const poll = event.datePolls[0];
+  const pollOptions =
+    poll?.options.map((option) => ({
+      id: option.id,
+      optionDate: option.optionDate,
+      label: option.label,
+      votes: option._count.votes,
+    })) || [];
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden pb-28 text-foreground lg:pb-0">
@@ -160,6 +181,12 @@ export default async function InvitePage({ params }: InvitePageProps) {
             theme={inviteTheme(event.theme)}
           />
 
+          <RealtimeRefresh
+            channels={[inviteChannel(event.slug), eventChannel(event.id)]}
+            enabled={Boolean(process.env.ABLY_API_KEY)}
+            label="invite live"
+          />
+
           <div className="grid gap-3 sm:grid-cols-3">
             {[
               ["date", dateLabel],
@@ -181,6 +208,15 @@ export default async function InvitePage({ params }: InvitePageProps) {
           />
 
           <AddToCalendar googleUrl={googleCalendarUrl} icsUrl={icsUrl} />
+
+          {poll && (
+            <PublicDatePoll
+              slug={event.slug}
+              pollId={poll.id}
+              question={poll.question}
+              options={pollOptions}
+            />
+          )}
 
           <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

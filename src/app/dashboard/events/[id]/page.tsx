@@ -4,10 +4,12 @@ import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { AddToCalendar } from "@/components/calendar/add-to-calendar";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { DatePollCard } from "@/components/dashboard/date-poll-card";
 import { DeleteEventButton } from "@/components/dashboard/delete-event-button";
 import { EventActivityFeed } from "@/components/dashboard/event-activity-feed";
 import { GuestList } from "@/components/dashboard/guest-list";
 import { QrCodeCard } from "@/components/qr/qr-code-card";
+import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
@@ -16,6 +18,7 @@ import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
 import { createWhatsAppShareUrl } from "@/lib/whatsapp";
 import { prisma } from "@/lib/prisma";
+import { dashboardChannel, eventChannel } from "@/lib/realtime/events";
 
 type ManageEventPageProps = {
   params: Promise<{ id: string }>;
@@ -94,6 +97,16 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
         orderBy: { createdAt: "desc" },
         take: 12,
       },
+      datePolls: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: {
+          options: {
+            orderBy: { optionDate: "asc" },
+            include: { _count: { select: { votes: true } } },
+          },
+        },
+      },
       _count: { select: { rsvps: true } },
     },
   });
@@ -117,6 +130,17 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   const checkedInCount = event.rsvps.filter((rsvp) => rsvp.checkedIn).length;
   const paidCount = event.rsvps.filter((rsvp) => rsvp.paymentStatus === "PAID").length;
   const pendingCount = event.rsvps.filter((rsvp) => rsvp.paymentStatus === "PENDING").length;
+  const poll = event.datePolls[0]
+    ? {
+        question: event.datePolls[0].question,
+        options: event.datePolls[0].options.map((option) => ({
+          id: option.id,
+          optionDate: option.optionDate,
+          label: option.label,
+          votes: option._count.votes,
+        })),
+      }
+    : null;
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
@@ -147,6 +171,16 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
               <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
                 {event.description || "A Sama room is ready for your people."}
               </p>
+              <div className="mt-5">
+                <RealtimeRefresh
+                  channels={[
+                    eventChannel(event.id),
+                    dashboardChannel(currentUser.dbUser.id),
+                  ]}
+                  enabled={Boolean(process.env.ABLY_API_KEY)}
+                  label="room live"
+                />
+              </div>
             </div>
           </section>
 
@@ -223,6 +257,8 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
               </div>
             )}
           </section>
+
+          <DatePollCard eventId={event.id} poll={poll} />
 
           <GuestList guests={event.rsvps} inviteUrl={inviteUrl} checkInBaseUrl={checkInUrl} />
         </div>

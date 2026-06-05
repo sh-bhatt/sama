@@ -1,8 +1,8 @@
 import type { PaymentStatus, RSVPStatus } from "@prisma/client";
 import Link from "next/link";
-import { deleteRsvpAction } from "@/app/dashboard/events/[id]/actions";
 import { formatEventDateShort } from "@/lib/date";
 import { CheckInButton } from "@/components/dashboard/check-in-button";
+import { DeleteRsvpButton } from "@/components/dashboard/delete-rsvp-button";
 import { PaymentStatusControl } from "@/components/dashboard/payment-status-control";
 import { RsvpStatusBadge } from "@/components/dashboard/rsvp-status-badge";
 
@@ -74,15 +74,7 @@ export function GuestList({ guests, inviteUrl, checkInBaseUrl }: GuestListProps)
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 <CheckInButton rsvpId={guest.id} checkedIn={guest.checkedIn} />
-                <form action={deleteRsvpAction}>
-                  <input type="hidden" name="rsvpId" value={guest.id} />
-                  <button
-                    type="submit"
-                    className="focus-ring rounded-full bg-rose-neon/15 px-4 py-2 text-sm font-black text-rose-neon"
-                  >
-                    Remove
-                  </button>
-                </form>
+                <DeleteRsvpButton rsvpId={guest.id} />
                 <Link
                   href={`${checkInBaseUrl}?rsvpId=${guest.id}`}
                   className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"

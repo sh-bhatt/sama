@@ -9,12 +9,14 @@ import { PulseCard } from "@/components/dashboard/pulse-card";
 import { RecentRsvps } from "@/components/dashboard/recent-rsvps";
 import { EventCard } from "@/components/discovery/event-card";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
+import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured } from "@/lib/auth/config";
 import { formatDateTimeLabel, isUpcomingEvent } from "@/lib/date";
 import { dashboardStats, demoEvent, hostEvents, recentActivity } from "@/lib/mock-data";
 import { prisma } from "@/lib/prisma";
+import { dashboardChannel } from "@/lib/realtime/events";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +79,10 @@ export default async function DashboardPage() {
               orderBy: { createdAt: "desc" },
               take: 2,
             },
+            datePolls: {
+              select: { id: true },
+              take: 1,
+            },
             _count: { select: { rsvps: true } },
           },
         })
@@ -112,6 +118,10 @@ export default async function DashboardPage() {
     headerList.get("x-forwarded-host") || headerList.get("host")
       ? `${headerList.get("x-forwarded-proto") || "http"}://${headerList.get("x-forwarded-host") || headerList.get("host")}`
       : "http://localhost:3000";
+  const dashboardRealtimeChannel =
+    userResult.status === "ready" && userResult.dbUser
+      ? dashboardChannel(userResult.dbUser.id)
+      : null;
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
@@ -140,6 +150,15 @@ export default async function DashboardPage() {
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
               Host the room, send the link, watch the guest list wake up.
             </p>
+            {dashboardRealtimeChannel && (
+              <div className="mt-5">
+                <RealtimeRefresh
+                  channels={[dashboardRealtimeChannel]}
+                  enabled={Boolean(process.env.ABLY_API_KEY)}
+                  label="dashboard live"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -240,6 +259,11 @@ export default async function DashboardPage() {
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-rose-neon">
                               {event.visibility}
                             </span>
+                            {event.datePolls.length > 0 && (
+                              <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-white">
+                                poll active
+                              </span>
+                            )}
                           </div>
                           <div className="flex flex-wrap gap-2">
                             <CopyLinkButton value={inviteUrl} />

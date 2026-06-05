@@ -1,3 +1,7 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { updateRsvpCheckInAction } from "@/app/dashboard/events/[id]/actions";
 
 type CheckInButtonProps = {
@@ -6,12 +10,23 @@ type CheckInButtonProps = {
 };
 
 export function CheckInButton({ rsvpId, checkedIn }: CheckInButtonProps) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function handleAction(formData: FormData) {
+    startTransition(async () => {
+      await updateRsvpCheckInAction(formData);
+      router.refresh();
+    });
+  }
+
   return (
-    <form action={updateRsvpCheckInAction}>
+    <form action={handleAction}>
       <input type="hidden" name="rsvpId" value={rsvpId} />
       <input type="hidden" name="checkedIn" value={checkedIn ? "false" : "true"} />
       <button
         type="submit"
+        disabled={pending}
         className={[
           "focus-ring rounded-full px-4 py-2 text-sm font-black transition hover:-translate-y-0.5",
           checkedIn
@@ -19,7 +34,7 @@ export function CheckInButton({ rsvpId, checkedIn }: CheckInButtonProps) {
             : "bg-[color:var(--card)] text-[color:var(--foreground)]",
         ].join(" ")}
       >
-        {checkedIn ? "Checked in" : "Check in"}
+        {pending ? "Updating" : checkedIn ? "Checked in" : "Check in"}
       </button>
     </form>
   );
