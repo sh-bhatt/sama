@@ -8,6 +8,7 @@ import { DatePollCard } from "@/components/dashboard/date-poll-card";
 import { DeleteEventButton } from "@/components/dashboard/delete-event-button";
 import { EventActivityFeed } from "@/components/dashboard/event-activity-feed";
 import { GuestList } from "@/components/dashboard/guest-list";
+import { MemoriesManagementCard } from "@/components/dashboard/memories-management-card";
 import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
@@ -106,6 +107,9 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             include: { _count: { select: { votes: true } } },
           },
         },
+      },
+      memoryPhotos: {
+        orderBy: { createdAt: "desc" },
       },
       _count: { select: { rsvps: true } },
     },
@@ -259,6 +263,11 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
           </section>
 
           <DatePollCard eventId={event.id} poll={poll} />
+
+          <MemoriesManagementCard
+            slug={event.slug}
+            memories={event.memoryPhotos}
+          />
 
           <GuestList guests={event.rsvps} inviteUrl={inviteUrl} checkInBaseUrl={checkInUrl} />
         </div>

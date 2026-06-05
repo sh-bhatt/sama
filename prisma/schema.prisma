@@ -123,15 +123,19 @@ model PollVote {
 }
 
 model MemoryPhoto {
-  id         String   @id @default(cuid())
-  eventId    String
-  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  imageUrl   String
-  caption    String?
-  uploadedBy String?
-  createdAt  DateTime @default(now())
+  id           String   @id @default(cuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  imageUrl     String
+  publicId     String?
+  caption      String?
+  uploadedBy   String?
+  uploaderName String?
+  approved     Boolean  @default(true)
+  createdAt    DateTime @default(now())
 
   @@index([eventId])
+  @@index([approved])
 }
 
 enum RSVPStatus {

@@ -11,6 +11,9 @@ export const realtimeEventTypes = [
   "POLL_VOTE_CREATED",
   "EVENT_UPDATED",
   "EVENT_DELETED",
+  "MEMORY_ADDED",
+  "MEMORY_DELETED",
+  "MEMORY_UPDATED",
 ] as const;
 
 export type RealtimeEventType = (typeof realtimeEventTypes)[number];

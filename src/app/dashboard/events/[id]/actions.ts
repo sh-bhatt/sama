@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import type { PaymentStatus } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { deleteMemoryImage } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import {
@@ -223,5 +224,47 @@ export async function deleteRsvpAction(formData: FormData) {
     hostId: rsvp.event.hostId,
     type: "RSVP_DELETED",
     message: `${rsvp.name} was removed from the guest list`,
+  });
+}
+
+export async function deleteMemoryAction(formData: FormData) {
+  const memoryId = String(formData.get("memoryId") || "");
+  const user = await requireLocalUser();
+
+  const memory = await prisma.memoryPhoto.findFirst({
+    where: {
+      id: memoryId,
+      event: { hostId: user.id },
+    },
+    include: {
+      event: { select: { id: true, slug: true, hostId: true } },
+    },
+  });
+
+  if (!memory) {
+    redirect("/dashboard");
+  }
+
+  await prisma.memoryPhoto.delete({ where: { id: memory.id } });
+  await deleteMemoryImage(memory.publicId);
+
+  await prisma.eventActivity.create({
+    data: {
+      eventId: memory.eventId,
+      type: "MEMORY_DELETED",
+      message: "A memory was removed",
+    },
+  });
+
+  revalidatePath(`/dashboard/events/${memory.eventId}`);
+  revalidatePath(`/invite/${memory.event.slug}`);
+  revalidatePath(`/invite/${memory.event.slug}/memories`);
+  revalidatePath("/dashboard");
+  await publishOwnedEventChange({
+    eventId: memory.eventId,
+    slug: memory.event.slug,
+    hostId: memory.event.hostId,
+    type: "MEMORY_DELETED",
+    message: "A memory was removed",
   });
 }

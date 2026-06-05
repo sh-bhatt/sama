@@ -6,6 +6,7 @@ import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { PublicGuestPreview } from "@/components/invite/public-guest-preview";
 import { RsvpForm } from "@/components/invite/rsvp-form";
 import { RsvpSummary } from "@/components/invite/rsvp-summary";
+import { MemoriesTeaser } from "@/components/memories/memories-teaser";
 import { PublicDatePoll } from "@/components/polls/public-date-poll";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
@@ -121,6 +122,16 @@ export default async function InvitePage({ params }: InvitePageProps) {
             orderBy: { optionDate: "asc" },
             include: { _count: { select: { votes: true } } },
           },
+        },
+      },
+      memoryPhotos: {
+        where: { approved: true },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          imageUrl: true,
+          caption: true,
         },
       },
     },
@@ -250,6 +261,8 @@ export default async function InvitePage({ params }: InvitePageProps) {
                 plusOne: rsvp.plusOne,
               }))}
           />
+
+          <MemoriesTeaser slug={event.slug} memories={event.memoryPhotos} />
 
           {(event.upiId || event.paymentNote) && (
             <section className="grid gap-4 md:grid-cols-2">
