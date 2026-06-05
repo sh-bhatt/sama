@@ -4,6 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { DeleteEventButton } from "@/components/dashboard/delete-event-button";
+import { EventActivityFeed } from "@/components/dashboard/event-activity-feed";
+import { GuestList } from "@/components/dashboard/guest-list";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
@@ -83,7 +85,14 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
 
   const event = await prisma.event.findFirst({
     where: { id, hostId: currentUser.dbUser.id },
-    include: { _count: { select: { rsvps: true } } },
+    include: {
+      rsvps: { orderBy: { createdAt: "desc" } },
+      activities: {
+        orderBy: { createdAt: "desc" },
+        take: 12,
+      },
+      _count: { select: { rsvps: true } },
+    },
   });
 
   if (!event) {
@@ -96,6 +105,12 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   const origin = host ? `${protocol}://${host}` : "http://localhost:3000";
   const inviteUrl = `${origin}/invite/${event.slug}`;
   const whatsappUrl = createWhatsAppShareUrl(event.title, inviteUrl);
+  const goingCount = event.rsvps.filter((rsvp) => rsvp.status === "GOING").length;
+  const maybeCount = event.rsvps.filter((rsvp) => rsvp.status === "MAYBE").length;
+  const notGoingCount = event.rsvps.filter((rsvp) => rsvp.status === "NOT_GOING").length;
+  const checkedInCount = event.rsvps.filter((rsvp) => rsvp.checkedIn).length;
+  const paidCount = event.rsvps.filter((rsvp) => rsvp.paymentStatus === "PAID").length;
+  const pendingCount = event.rsvps.filter((rsvp) => rsvp.paymentStatus === "PENDING").length;
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
@@ -176,17 +191,34 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
               rsvp summary
             </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              {["Going 0", "Maybe 0", "Can't go 0"].map((item) => (
-                <div key={item} className="rounded-2xl bg-black/35 px-4 py-4 font-black text-white">
-                  {item}
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Going", goingCount],
+                ["Maybe", maybeCount],
+                ["Can't go", notGoingCount],
+                ["Checked in", checkedInCount],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl bg-black/35 px-4 py-4">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-zinc-500">{label}</p>
+                  <p className="mt-2 text-3xl font-black text-white">{value}</p>
                 </div>
               ))}
             </div>
-            <div className="mt-4 rounded-2xl border border-dashed border-[color:var(--border)] px-4 py-6">
-              <p className="theme-muted font-bold">RSVPs arrive here in Phase 2C.</p>
-            </div>
+            {(event.upiId || event.paymentNote) && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-lime-mute px-4 py-4 text-zinc-950">
+                  <p className="text-xs font-black uppercase tracking-[0.14em]">paid</p>
+                  <p className="mt-2 text-3xl font-black">{paidCount}</p>
+                </div>
+                <div className="rounded-2xl bg-saffron-200 px-4 py-4 text-zinc-950">
+                  <p className="text-xs font-black uppercase tracking-[0.14em]">pending</p>
+                  <p className="mt-2 text-3xl font-black">{pendingCount}</p>
+                </div>
+              </div>
+            )}
           </section>
+
+          <GuestList guests={event.rsvps} inviteUrl={inviteUrl} />
         </div>
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -207,18 +239,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             </div>
           </section>
 
-          <section className="theme-panel rounded-[2rem] border p-5">
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
-              host moves
-            </p>
-            <div className="mt-4 space-y-3">
-              {["Edit invite details", "Send reminder", "Open check-in"].map((item) => (
-                <div key={item} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
-                  {item} <span className="text-[color:var(--muted)]">- Phase 2C</span>
-                </div>
-              ))}
-            </div>
-          </section>
+          <EventActivityFeed activities={event.activities} />
 
           <DeleteEventButton eventId={event.id} />
         </aside>

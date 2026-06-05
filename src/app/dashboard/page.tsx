@@ -65,10 +65,31 @@ export default async function DashboardPage() {
       ? await prisma.event.findMany({
           where: { hostId: userResult.dbUser.id },
           orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
-          include: { _count: { select: { rsvps: true } } },
+          include: {
+            rsvps: {
+              select: {
+                id: true,
+                checkedIn: true,
+                status: true,
+              },
+            },
+            activities: {
+              orderBy: { createdAt: "desc" },
+              take: 2,
+            },
+            _count: { select: { rsvps: true } },
+          },
         })
       : [];
   const totalRsvps = realEvents.reduce((total, event) => total + event._count.rsvps, 0);
+  const checkedInGuests = realEvents.reduce(
+    (total, event) => total + event.rsvps.filter((rsvp) => rsvp.checkedIn).length,
+    0,
+  );
+  const latestActivity = realEvents
+    .flatMap((event) => event.activities.map((activity) => ({ ...activity, eventTitle: event.title })))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, 5);
   const realStats =
     userResult.status === "ready"
       ? [
@@ -76,14 +97,14 @@ export default async function DashboardPage() {
           {
             label: "guest energy",
             value: String(totalRsvps),
-            detail: "RSVPs connect in Phase 2C",
+            detail: "real RSVP count",
           },
           {
             label: "upcoming",
             value: String(realEvents.filter((event) => isUpcomingEvent(event.eventDate)).length),
             detail: "rooms ahead",
           },
-          { label: "check-ins", value: "0", detail: "opens in Phase 2C" },
+          { label: "check-ins", value: String(checkedInGuests), detail: "guests at the room" },
         ]
       : dashboardStats;
   const headerList = await headers();
@@ -213,6 +234,9 @@ export default async function DashboardPage() {
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-lime-mute">
                               {event._count.rsvps} RSVPs
                             </span>
+                            <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-white">
+                              {event.rsvps.filter((rsvp) => rsvp.checkedIn).length} checked in
+                            </span>
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-rose-neon">
                               {event.visibility}
                             </span>
@@ -252,8 +276,8 @@ export default async function DashboardPage() {
               <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-4">
                 <PulseCard label="new RSVPs today" value="18" accent="lime" />
                 <PulseCard label="WhatsApp shares" value="7" accent="rose" />
-                <PulseCard label="guests checked in" value="3" accent="blue" />
-                <PulseCard label="pending nudges" value="2" accent="saffron" />
+                <PulseCard label="guests checked in" value={String(checkedInGuests)} accent="blue" />
+                <PulseCard label="total RSVPs" value={String(totalRsvps)} accent="saffron" />
               </div>
             </section>
 
@@ -302,11 +326,17 @@ export default async function DashboardPage() {
             <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">activity feed</p>
               <div className="mt-4 space-y-3">
-                {recentActivity.map((item) => (
-                  <p key={item} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
-                    {item}
-                  </p>
-                ))}
+                {latestActivity.length
+                  ? latestActivity.map((item) => (
+                      <p key={item.id} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                        {item.message} <span className="text-zinc-500">- {item.eventTitle}</span>
+                      </p>
+                    ))
+                  : recentActivity.map((item) => (
+                      <p key={item} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                        {item}
+                      </p>
+                    ))}
               </div>
             </section>
             <section className="min-w-0 rounded-[2rem] border border-white/10 bg-lime-mute p-5 text-zinc-950">

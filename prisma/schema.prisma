@@ -71,6 +71,8 @@ model RSVP {
   updatedAt     DateTime      @updatedAt
 
   @@index([eventId])
+  @@index([email])
+  @@index([phone])
 }
 
 model EventActivity {
