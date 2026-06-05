@@ -1,4 +1,5 @@
 import type { PaymentStatus, RSVPStatus } from "@prisma/client";
+import Link from "next/link";
 import { deleteRsvpAction } from "@/app/dashboard/events/[id]/actions";
 import { formatEventDateShort } from "@/lib/date";
 import { CheckInButton } from "@/components/dashboard/check-in-button";
@@ -21,9 +22,10 @@ type Guest = {
 type GuestListProps = {
   guests: Guest[];
   inviteUrl: string;
+  checkInBaseUrl: string;
 };
 
-export function GuestList({ guests, inviteUrl }: GuestListProps) {
+export function GuestList({ guests, inviteUrl, checkInBaseUrl }: GuestListProps) {
   if (!guests.length) {
     return (
       <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
@@ -81,6 +83,12 @@ export function GuestList({ guests, inviteUrl }: GuestListProps) {
                     Remove
                   </button>
                 </form>
+                <Link
+                  href={`${checkInBaseUrl}?rsvpId=${guest.id}`}
+                  className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
+                >
+                  Check-in QR
+                </Link>
               </div>
             </div>
             <div className="mt-4">

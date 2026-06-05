@@ -2,14 +2,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
+import { AddToCalendar } from "@/components/calendar/add-to-calendar";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { DeleteEventButton } from "@/components/dashboard/delete-event-button";
 import { EventActivityFeed } from "@/components/dashboard/event-activity-feed";
 import { GuestList } from "@/components/dashboard/guest-list";
+import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
+import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
 import { createWhatsAppShareUrl } from "@/lib/whatsapp";
 import { prisma } from "@/lib/prisma";
@@ -104,7 +107,10 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   const protocol = headerList.get("x-forwarded-proto") || "http";
   const origin = host ? `${protocol}://${host}` : "http://localhost:3000";
   const inviteUrl = `${origin}/invite/${event.slug}`;
+  const checkInUrl = `${origin}/dashboard/events/${event.id}/check-in`;
   const whatsappUrl = createWhatsAppShareUrl(event.title, inviteUrl);
+  const googleCalendarUrl = createGoogleCalendarUrl(event, inviteUrl);
+  const icsUrl = `/api/events/${event.id}/calendar`;
   const goingCount = event.rsvps.filter((rsvp) => rsvp.status === "GOING").length;
   const maybeCount = event.rsvps.filter((rsvp) => rsvp.status === "MAYBE").length;
   const notGoingCount = event.rsvps.filter((rsvp) => rsvp.status === "NOT_GOING").length;
@@ -218,10 +224,18 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             )}
           </section>
 
-          <GuestList guests={event.rsvps} inviteUrl={inviteUrl} />
+          <GuestList guests={event.rsvps} inviteUrl={inviteUrl} checkInBaseUrl={checkInUrl} />
         </div>
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
+          <QrCodeCard
+            value={inviteUrl}
+            title="Scan to open invite"
+            description="Public QR for the guest invite link."
+          />
+
+          <AddToCalendar googleUrl={googleCalendarUrl} icsUrl={icsUrl} />
+
           <section className="theme-panel rounded-[2rem] border p-5">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
               invite link
@@ -235,6 +249,12 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-center text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5"
               >
                 Open public invite
+              </Link>
+              <Link
+                href={`/dashboard/events/${event.id}/check-in`}
+                className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-center text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5"
+              >
+                QR check-in
               </Link>
             </div>
           </section>

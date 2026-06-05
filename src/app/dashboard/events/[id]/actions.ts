@@ -78,6 +78,32 @@ export async function updateRsvpCheckInAction(formData: FormData) {
   revalidatePath(`/dashboard/events/${rsvp.eventId}`);
 }
 
+export async function checkInRsvpByIdAction(formData: FormData) {
+  const rsvpId = String(formData.get("rsvpId") || "");
+  const rsvp = await getOwnedRsvp(rsvpId);
+
+  if (!rsvp) {
+    redirect("/dashboard");
+  }
+
+  const updated = await prisma.rSVP.update({
+    where: { id: rsvp.id },
+    data: { checkedIn: true },
+  });
+
+  await prisma.eventActivity.create({
+    data: {
+      eventId: rsvp.eventId,
+      type: "CHECK_IN_UPDATED",
+      message: `${updated.name} checked in via QR`,
+    },
+  });
+
+  revalidatePath(`/dashboard/events/${rsvp.eventId}`);
+  revalidatePath(`/dashboard/events/${rsvp.eventId}/check-in`);
+  revalidatePath("/dashboard");
+}
+
 export async function updateRsvpPaymentStatusAction(formData: FormData) {
   const rsvpId = String(formData.get("rsvpId") || "");
   const paymentStatus = String(formData.get("paymentStatus") || "") as PaymentStatus;

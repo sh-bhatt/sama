@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import { AddToCalendar } from "@/components/calendar/add-to-calendar";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { PublicGuestPreview } from "@/components/invite/public-guest-preview";
@@ -8,6 +9,7 @@ import { RsvpSummary } from "@/components/invite/rsvp-summary";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isDatabaseConfigured } from "@/lib/auth/config";
+import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
 import { demoEvent, recentActivity } from "@/lib/mock-data";
 import { prisma } from "@/lib/prisma";
@@ -121,6 +123,8 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const origin = host ? `${protocol}://${host}` : "http://localhost:3000";
   const inviteUrl = `${origin}/invite/${event.slug}`;
   const whatsappUrl = createWhatsAppShareUrl(event.title, inviteUrl);
+  const googleCalendarUrl = createGoogleCalendarUrl(event, inviteUrl);
+  const icsUrl = `/api/events/${event.id}/calendar`;
   const dateLabel = formatEventDate(event.eventDate);
   const hostName = event.host.name || event.host.email?.split("@")[0] || "your host";
   const goingCount = event.rsvps.filter((rsvp) => rsvp.status === "GOING").length;
@@ -175,6 +179,8 @@ export default async function InvitePage({ params }: InvitePageProps) {
             notGoing={notGoingCount}
             capacity={event.capacity}
           />
+
+          <AddToCalendar googleUrl={googleCalendarUrl} icsUrl={icsUrl} />
 
           <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
