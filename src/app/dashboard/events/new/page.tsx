@@ -182,6 +182,20 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
                   </span>
                   <input name="allowPlusOne" type="checkbox" defaultChecked className="size-5 accent-lime-mute" />
                 </label>
+                <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+                  <span>
+                    <span className="theme-heading block font-black">Require guest approval</span>
+                    <span className="theme-muted block text-sm font-semibold">New Going and Maybe RSVPs wait for your nod.</span>
+                  </span>
+                  <input name="requiresApproval" type="checkbox" className="size-5 accent-lime-mute" />
+                </label>
+                <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+                  <span>
+                    <span className="theme-heading block font-black">Enable waitlist</span>
+                    <span className="theme-muted block text-sm font-semibold">When approved capacity is full, Going RSVPs can queue up.</span>
+                  </span>
+                  <input name="waitlistEnabled" type="checkbox" defaultChecked className="size-5 accent-lime-mute" />
+                </label>
               </div>
             </section>
 

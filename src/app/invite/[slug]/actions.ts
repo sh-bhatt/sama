@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { ApprovalStatus, RSVPStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   initialRsvpActionState,
@@ -15,7 +16,15 @@ import {
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
 
-function statusMessage(name: string, status: "GOING" | "MAYBE" | "NOT_GOING") {
+function statusMessage(name: string, status: RSVPStatus, approvalStatus: ApprovalStatus) {
+  if (approvalStatus === "PENDING") {
+    return `${name} requested to join`;
+  }
+
+  if (approvalStatus === "WAITLISTED") {
+    return `${name} joined the waitlist`;
+  }
+
   if (status === "GOING") {
     return `${name} is going`;
   }
@@ -25,6 +34,73 @@ function statusMessage(name: string, status: "GOING" | "MAYBE" | "NOT_GOING") {
   }
 
   return `${name} can't make it`;
+}
+
+function successMessage(approvalStatus: ApprovalStatus, existingRsvp: boolean) {
+  if (approvalStatus === "PENDING") {
+    return "Your request has been sent to the host.";
+  }
+
+  if (approvalStatus === "WAITLISTED") {
+    return "You're on the waitlist.";
+  }
+
+  if (approvalStatus === "REJECTED") {
+    return "Your RSVP is saved, but it is not approved yet.";
+  }
+
+  return existingRsvp ? "RSVP updated." : "You're on the list.";
+}
+
+async function resolveApprovalStatus({
+  eventId,
+  capacity,
+  requiresApproval,
+  waitlistEnabled,
+  inputStatus,
+  existingStatus,
+  existingApprovalStatus,
+}: {
+  eventId: string;
+  capacity: number | null;
+  requiresApproval: boolean;
+  waitlistEnabled: boolean;
+  inputStatus: RSVPStatus;
+  existingStatus?: RSVPStatus;
+  existingApprovalStatus?: ApprovalStatus;
+}) {
+  if (inputStatus === "NOT_GOING") {
+    return "APPROVED" satisfies ApprovalStatus;
+  }
+
+  if (inputStatus === "GOING" && capacity) {
+    const approvedGoingCount = await prisma.rSVP.count({
+      where: {
+        eventId,
+        status: "GOING",
+        approvalStatus: "APPROVED",
+        ...(existingStatus === "GOING" && existingApprovalStatus === "APPROVED"
+          ? {}
+          : {}),
+      },
+    });
+    const isAlreadyApprovedGoing =
+      existingStatus === "GOING" && existingApprovalStatus === "APPROVED";
+
+    if (!isAlreadyApprovedGoing && approvedGoingCount >= capacity) {
+      if (waitlistEnabled) {
+        return "WAITLISTED" satisfies ApprovalStatus;
+      }
+
+      return null;
+    }
+  }
+
+  if (requiresApproval) {
+    return "PENDING" satisfies ApprovalStatus;
+  }
+
+  return "APPROVED" satisfies ApprovalStatus;
 }
 
 export async function submitRsvpAction(
@@ -45,7 +121,14 @@ export async function submitRsvpAction(
   const input = parsed.data;
   const event = await prisma.event.findUnique({
     where: { slug: input.slug },
-    select: { id: true, slug: true, hostId: true, capacity: true },
+    select: {
+      id: true,
+      slug: true,
+      hostId: true,
+      capacity: true,
+      requiresApproval: true,
+      waitlistEnabled: true,
+    },
   });
 
   if (!event) {
@@ -65,20 +148,24 @@ export async function submitRsvpAction(
         })
       : null;
 
-  if (event.capacity && input.status === "GOING" && existingRsvp?.status !== "GOING") {
-    const goingCount = await prisma.rSVP.count({
-      where: { eventId: event.id, status: "GOING" },
-    });
+  const approvalStatus = await resolveApprovalStatus({
+    eventId: event.id,
+    capacity: event.capacity,
+    requiresApproval: event.requiresApproval,
+    waitlistEnabled: event.waitlistEnabled,
+    inputStatus: input.status,
+    existingStatus: existingRsvp?.status,
+    existingApprovalStatus: existingRsvp?.approvalStatus,
+  });
 
-    if (goingCount >= event.capacity) {
-      return {
-        status: "error",
-        message: "This room is full for going RSVPs. Maybe is still open.",
-      };
-    }
+  if (!approvalStatus) {
+    return {
+      status: "error",
+      message: "This room is full for going RSVPs.",
+    };
   }
 
-  const activityType = existingRsvp ? "RSVP_UPDATED" : "RSVP_CREATED";
+  const activityType = approvalStatus === "WAITLISTED" ? "RSVP_WAITLISTED" : existingRsvp ? "RSVP_UPDATED" : "RSVP_CREATED";
   const rsvp = existingRsvp
     ? await prisma.rSVP.update({
         where: { id: existingRsvp.id },
@@ -87,6 +174,7 @@ export async function submitRsvpAction(
           email: input.email,
           phone: input.phone,
           status: input.status,
+          approvalStatus,
           plusOne: input.plusOne,
           note: input.note,
         },
@@ -98,6 +186,7 @@ export async function submitRsvpAction(
           email: input.email,
           phone: input.phone,
           status: input.status,
+          approvalStatus,
           plusOne: input.plusOne,
           note: input.note,
         },
@@ -107,7 +196,7 @@ export async function submitRsvpAction(
     data: {
       eventId: event.id,
       type: activityType,
-      message: statusMessage(rsvp.name, rsvp.status),
+      message: statusMessage(rsvp.name, rsvp.status, rsvp.approvalStatus),
     },
   });
 
@@ -121,13 +210,13 @@ export async function submitRsvpAction(
       type: activityType,
       eventId: event.id,
       slug: event.slug,
-      message: statusMessage(rsvp.name, rsvp.status),
+      message: statusMessage(rsvp.name, rsvp.status, rsvp.approvalStatus),
     },
   );
 
   return {
     status: "success",
-    message: existingRsvp ? "RSVP updated." : "You're on the list.",
+    message: successMessage(rsvp.approvalStatus, Boolean(existingRsvp)),
   };
 }
 

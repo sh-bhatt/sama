@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import type { PaymentStatus } from "@prisma/client";
+import type { ApprovalStatus, PaymentStatus } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { deleteMemoryImage } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +14,8 @@ import {
   inviteChannel,
   type RealtimeEventType,
 } from "@/lib/realtime/events";
+
+const approvalStatuses: ApprovalStatus[] = ["APPROVED", "PENDING", "REJECTED", "WAITLISTED"];
 
 async function requireLocalUser() {
   await auth.protect();
@@ -76,6 +78,16 @@ function revalidateEventSurfaces(eventId: string, slug: string) {
   revalidatePath("/dashboard");
 }
 
+async function approvedGoingCount(eventId: string) {
+  return prisma.rSVP.count({
+    where: {
+      eventId,
+      status: "GOING",
+      approvalStatus: "APPROVED",
+    },
+  });
+}
+
 async function publishOwnedEventChange({
   eventId,
   slug,
@@ -102,6 +114,11 @@ export async function updateRsvpCheckInAction(formData: FormData) {
 
   if (!rsvp) {
     redirect("/dashboard");
+  }
+
+  if (checkedIn && rsvp.approvalStatus !== "APPROVED") {
+    revalidateEventSurfaces(rsvp.eventId, rsvp.event.slug);
+    return;
   }
 
   const updated = await prisma.rSVP.update({
@@ -135,6 +152,11 @@ export async function checkInRsvpByIdAction(formData: FormData) {
 
   if (!rsvp) {
     redirect("/dashboard");
+  }
+
+  if (rsvp.approvalStatus !== "APPROVED") {
+    revalidateEventSurfaces(rsvp.eventId, rsvp.event.slug);
+    return;
   }
 
   const updated = await prisma.rSVP.update({
@@ -266,5 +288,143 @@ export async function deleteMemoryAction(formData: FormData) {
     hostId: memory.event.hostId,
     type: "MEMORY_DELETED",
     message: "A memory was removed",
+  });
+}
+
+function approvalMessage(name: string, approvalStatus: ApprovalStatus) {
+  if (approvalStatus === "APPROVED") {
+    return `${name} was approved`;
+  }
+
+  if (approvalStatus === "WAITLISTED") {
+    return `${name} moved to the waitlist`;
+  }
+
+  if (approvalStatus === "REJECTED") {
+    return `${name} was rejected`;
+  }
+
+  return `${name} is pending approval`;
+}
+
+function approvalRealtimeType(approvalStatus: ApprovalStatus): RealtimeEventType {
+  if (approvalStatus === "WAITLISTED") {
+    return "RSVP_WAITLISTED";
+  }
+
+  if (approvalStatus === "REJECTED") {
+    return "RSVP_REJECTED";
+  }
+
+  return "RSVP_APPROVAL_UPDATED";
+}
+
+export async function updateRsvpApprovalStatusAction(formData: FormData) {
+  const rsvpId = String(formData.get("rsvpId") || "");
+  const approvalStatus = String(formData.get("approvalStatus") || "") as ApprovalStatus;
+
+  if (!approvalStatuses.includes(approvalStatus)) {
+    return;
+  }
+
+  const rsvp = await getOwnedRsvp(rsvpId);
+
+  if (!rsvp) {
+    redirect("/dashboard");
+  }
+
+  if (
+    approvalStatus === "APPROVED" &&
+    rsvp.status === "GOING" &&
+    rsvp.approvalStatus !== "APPROVED"
+  ) {
+    const event = await prisma.event.findUnique({
+      where: { id: rsvp.eventId },
+      select: { capacity: true },
+    });
+
+    if (event?.capacity && (await approvedGoingCount(rsvp.eventId)) >= event.capacity) {
+      revalidateEventSurfaces(rsvp.eventId, rsvp.event.slug);
+      return;
+    }
+  }
+
+  const updated = await prisma.rSVP.update({
+    where: { id: rsvp.id },
+    data: { approvalStatus },
+  });
+  const message = approvalMessage(updated.name, updated.approvalStatus);
+
+  await prisma.eventActivity.create({
+    data: {
+      eventId: rsvp.eventId,
+      type: approvalRealtimeType(updated.approvalStatus),
+      message,
+    },
+  });
+
+  revalidateEventSurfaces(rsvp.eventId, rsvp.event.slug);
+  await publishOwnedEventChange({
+    eventId: rsvp.eventId,
+    slug: rsvp.event.slug,
+    hostId: rsvp.event.hostId,
+    type: approvalRealtimeType(updated.approvalStatus),
+    message,
+  });
+}
+
+export async function approveNextWaitlistedGuestAction(formData: FormData) {
+  const eventId = String(formData.get("eventId") || "");
+  const user = await requireLocalUser();
+
+  const event = await prisma.event.findFirst({
+    where: { id: eventId, hostId: user.id },
+    select: { id: true, slug: true, hostId: true, capacity: true },
+  });
+
+  if (!event) {
+    redirect("/dashboard");
+  }
+
+  if (event.capacity && (await approvedGoingCount(event.id)) >= event.capacity) {
+    revalidateEventSurfaces(event.id, event.slug);
+    return;
+  }
+
+  const nextGuest = await prisma.rSVP.findFirst({
+    where: {
+      eventId: event.id,
+      status: "GOING",
+      approvalStatus: "WAITLISTED",
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (!nextGuest) {
+    revalidateEventSurfaces(event.id, event.slug);
+    return;
+  }
+
+  const updated = await prisma.rSVP.update({
+    where: { id: nextGuest.id },
+    data: { approvalStatus: "APPROVED" },
+  });
+  const message = `${updated.name} was approved from waitlist`;
+
+  await prisma.eventActivity.create({
+    data: {
+      eventId: event.id,
+      type: "WAITLIST_APPROVED",
+      message,
+    },
+  });
+
+  revalidateEventSurfaces(event.id, event.slug);
+  await publishOwnedEventChange({
+    eventId: event.id,
+    slug: event.slug,
+    hostId: event.hostId,
+    type: "WAITLIST_APPROVED",
+    message,
   });
 }

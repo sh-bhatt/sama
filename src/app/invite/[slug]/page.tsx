@@ -105,6 +105,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
           id: true,
           name: true,
           status: true,
+          approvalStatus: true,
           plusOne: true,
           createdAt: true,
         },
@@ -151,12 +152,13 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const icsUrl = `/api/events/${event.id}/calendar`;
   const dateLabel = formatEventDate(event.eventDate);
   const hostName = event.host.name || event.host.email?.split("@")[0] || "your host";
-  const goingCount = event.rsvps.filter((rsvp) => rsvp.status === "GOING").length;
-  const maybeCount = event.rsvps.filter((rsvp) => rsvp.status === "MAYBE").length;
-  const notGoingCount = event.rsvps.filter((rsvp) => rsvp.status === "NOT_GOING").length;
+  const publicRsvps = event.rsvps.filter((rsvp) => rsvp.approvalStatus === "APPROVED");
+  const goingCount = publicRsvps.filter((rsvp) => rsvp.status === "GOING").length;
+  const maybeCount = publicRsvps.filter((rsvp) => rsvp.status === "MAYBE").length;
+  const notGoingCount = publicRsvps.filter((rsvp) => rsvp.status === "NOT_GOING").length;
   const goingFull = Boolean(event.capacity && goingCount >= event.capacity);
-  const guestInitials = event.rsvps.length
-    ? event.rsvps
+  const guestInitials = publicRsvps.length
+    ? publicRsvps
         .filter((rsvp) => rsvp.status !== "NOT_GOING")
         .slice(0, 5)
         .map((rsvp) => rsvp.name.slice(0, 2).toUpperCase())
@@ -217,6 +219,18 @@ export default async function InvitePage({ params }: InvitePageProps) {
             notGoing={notGoingCount}
             capacity={event.capacity}
           />
+          {(event.requiresApproval || event.waitlistEnabled) && (
+            <section className="theme-panel rounded-[1.5rem] border p-5">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+                entry note
+              </p>
+              <p className="theme-muted mt-2 font-semibold leading-7">
+                {event.requiresApproval
+                  ? "The host is approving RSVPs for this room. You will see a request confirmation after submitting."
+                  : "Approved Going guests count toward capacity. If the room fills, the waitlist takes over."}
+              </p>
+            </section>
+          )}
 
           <AddToCalendar googleUrl={googleCalendarUrl} icsUrl={icsUrl} />
 
@@ -252,7 +266,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
           <PublicGuestPreview
             guests={event.rsvps
-              .filter((rsvp) => rsvp.status !== "NOT_GOING")
+              .filter((rsvp) => rsvp.approvalStatus === "APPROVED" && rsvp.status !== "NOT_GOING")
               .slice(0, 12)
               .map((rsvp) => ({
                 id: rsvp.id,

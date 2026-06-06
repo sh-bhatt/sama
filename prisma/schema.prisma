@@ -39,6 +39,8 @@ model Event {
   city          String?
   capacity      Int?
   allowPlusOne  Boolean  @default(true)
+  requiresApproval Boolean @default(false)
+  waitlistEnabled  Boolean @default(true)
   upiId         String?
   paymentNote   String?
   createdAt     DateTime @default(now())
@@ -63,6 +65,7 @@ model RSVP {
   email         String?
   phone         String?
   status        RSVPStatus
+  approvalStatus ApprovalStatus @default(APPROVED)
   plusOne       Boolean       @default(false)
   note          String?
   paymentStatus PaymentStatus @default(NOT_REQUIRED)
@@ -73,6 +76,7 @@ model RSVP {
   @@index([eventId])
   @@index([email])
   @@index([phone])
+  @@index([approvalStatus])
 }
 
 model EventActivity {
@@ -148,4 +152,11 @@ enum PaymentStatus {
   NOT_REQUIRED
   PENDING
   PAID
+}
+
+enum ApprovalStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  WAITLISTED
 }

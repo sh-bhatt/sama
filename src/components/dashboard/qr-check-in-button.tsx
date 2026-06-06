@@ -7,9 +7,10 @@ import { checkInRsvpByIdAction } from "@/app/dashboard/events/[id]/actions";
 type QrCheckInButtonProps = {
   rsvpId: string;
   checkedIn: boolean;
+  canCheckIn?: boolean;
 };
 
-export function QrCheckInButton({ rsvpId, checkedIn }: QrCheckInButtonProps) {
+export function QrCheckInButton({ rsvpId, checkedIn, canCheckIn = true }: QrCheckInButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -25,10 +26,13 @@ export function QrCheckInButton({ rsvpId, checkedIn }: QrCheckInButtonProps) {
       <input type="hidden" name="rsvpId" value={rsvpId} />
       <button
         type="submit"
-        disabled={checkedIn || pending}
-        className="focus-ring rounded-full bg-lime-mute px-4 py-2 text-sm font-black text-zinc-950 disabled:opacity-55"
+        disabled={checkedIn || pending || !canCheckIn}
+        className={[
+          "focus-ring rounded-full px-4 py-2 text-sm font-black disabled:opacity-55",
+          canCheckIn ? "bg-lime-mute text-zinc-950" : "bg-[color:var(--card)] text-[color:var(--muted)]",
+        ].join(" ")}
       >
-        {pending ? "Checking in" : checkedIn ? "Already in" : "Check in"}
+        {pending ? "Checking in" : checkedIn ? "Already in" : canCheckIn ? "Check in" : "Not approved"}
       </button>
     </form>
   );

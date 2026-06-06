@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
+import { ApprovalStatusBadge } from "@/components/dashboard/approval-status-badge";
 import { QrCheckInButton } from "@/components/dashboard/qr-check-in-button";
 import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
@@ -181,6 +182,7 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                           <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-black text-lime-mute">
                             {rsvp.status.toLowerCase().replace("_", " ")}
                           </span>
+                          <ApprovalStatusBadge status={rsvp.approvalStatus} />
                           {rsvp.checkedIn && (
                             <span className="rounded-full bg-lime-mute px-3 py-1 text-xs font-black text-zinc-950">
                               checked in
@@ -192,7 +194,11 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-2">
-                        <QrCheckInButton rsvpId={rsvp.id} checkedIn={rsvp.checkedIn} />
+                        <QrCheckInButton
+                          rsvpId={rsvp.id}
+                          checkedIn={rsvp.checkedIn}
+                          canCheckIn={rsvp.approvalStatus === "APPROVED"}
+                        />
                         <Link
                           href={checkInUrl}
                           className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
@@ -201,6 +207,11 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                         </Link>
                       </div>
                     </div>
+                    {rsvp.approvalStatus !== "APPROVED" && (
+                      <p className="mt-4 rounded-2xl bg-saffron-200/12 px-4 py-3 text-sm font-black text-saffron-200">
+                        This guest is not approved for check-in yet.
+                      </p>
+                    )}
                   </article>
                 );
               })
@@ -214,12 +225,21 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
         </div>
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
-          {rsvpId && event.rsvps[0] ? (
+          {rsvpId && event.rsvps[0]?.approvalStatus === "APPROVED" ? (
             <QrCodeCard
               value={`${origin}/dashboard/events/${event.id}/check-in?rsvpId=${event.rsvps[0].id}`}
               title="Guest check-in QR"
               description={`Protected QR for ${event.rsvps[0].name}. Host sign-in is required.`}
             />
+          ) : rsvpId && event.rsvps[0] ? (
+            <section className="theme-panel rounded-[2rem] border p-5">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                check-in blocked
+              </p>
+              <p className="theme-muted mt-3 font-semibold leading-7">
+                This guest is not approved for check-in yet.
+              </p>
+            </section>
           ) : (
             <section className="theme-panel rounded-[2rem] border p-5">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">

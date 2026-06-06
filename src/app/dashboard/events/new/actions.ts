@@ -49,6 +49,8 @@ export async function createEventAction(formData: FormData) {
       city: input.city,
       capacity: input.capacity,
       allowPlusOne: input.allowPlusOne,
+      requiresApproval: input.requiresApproval,
+      waitlistEnabled: input.waitlistEnabled,
       upiId: input.upiId,
       paymentNote: input.paymentNote,
     },

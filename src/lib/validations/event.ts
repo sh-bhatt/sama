@@ -34,6 +34,8 @@ export const eventInputSchema = z.object({
   visibility: z.enum(["public", "private"]).default("public"),
   capacity: optionalPositiveInteger,
   allowPlusOne: z.preprocess((value) => value === "on" || value === "true", z.boolean()),
+  requiresApproval: z.preprocess((value) => value === "on" || value === "true", z.boolean()),
+  waitlistEnabled: z.preprocess((value) => value === "on" || value === "true", z.boolean()),
   upiId: optionalText,
   paymentNote: optionalText,
 });
@@ -53,6 +55,8 @@ export function parseEventFormData(formData: FormData) {
     visibility: formData.get("visibility") || "public",
     capacity: formData.get("capacity"),
     allowPlusOne: formData.get("allowPlusOne"),
+    requiresApproval: formData.get("requiresApproval"),
+    waitlistEnabled: formData.get("waitlistEnabled") ?? "true",
     upiId: formData.get("upiId"),
     paymentNote: formData.get("paymentNote"),
   });

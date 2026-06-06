@@ -4,6 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { AddToCalendar } from "@/components/calendar/add-to-calendar";
 import { CopyLinkButton } from "@/components/copy-link-button";
+import { ApprovalSummary } from "@/components/dashboard/approval-summary";
+import { ApproveNextWaitlistButton } from "@/components/dashboard/approve-next-waitlist-button";
 import { DatePollCard } from "@/components/dashboard/date-poll-card";
 import { DeleteEventButton } from "@/components/dashboard/delete-event-button";
 import { EventActivityFeed } from "@/components/dashboard/event-activity-feed";
@@ -134,6 +136,16 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   const checkedInCount = event.rsvps.filter((rsvp) => rsvp.checkedIn).length;
   const paidCount = event.rsvps.filter((rsvp) => rsvp.paymentStatus === "PAID").length;
   const pendingCount = event.rsvps.filter((rsvp) => rsvp.paymentStatus === "PENDING").length;
+  const approvedCount = event.rsvps.filter((rsvp) => rsvp.approvalStatus === "APPROVED").length;
+  const pendingApprovalCount = event.rsvps.filter((rsvp) => rsvp.approvalStatus === "PENDING").length;
+  const waitlistedCount = event.rsvps.filter((rsvp) => rsvp.approvalStatus === "WAITLISTED").length;
+  const rejectedCount = event.rsvps.filter((rsvp) => rsvp.approvalStatus === "REJECTED").length;
+  const approvedGoingCount = event.rsvps.filter(
+    (rsvp) => rsvp.status === "GOING" && rsvp.approvalStatus === "APPROVED",
+  ).length;
+  const canApproveNextWaitlisted = Boolean(
+    waitlistedCount > 0 && (!event.capacity || approvedGoingCount < event.capacity),
+  );
   const poll = event.datePolls[0]
     ? {
         question: event.datePolls[0].question,
@@ -213,6 +225,8 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 ["visibility", event.visibility],
                 ["capacity", event.capacity ? String(event.capacity) : "Open"],
                 ["plus one", event.allowPlusOne ? "Allowed" : "Off"],
+                ["approval", event.requiresApproval ? "Required" : "Open"],
+                ["waitlist", event.waitlistEnabled ? "Enabled" : "Off"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl bg-black/35 px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">
@@ -261,6 +275,28 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
               </div>
             )}
           </section>
+
+          <ApprovalSummary
+            approved={approvedCount}
+            pending={pendingApprovalCount}
+            waitlisted={waitlistedCount}
+            rejected={rejectedCount}
+          />
+          {canApproveNextWaitlisted && (
+            <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-electric">
+                    waitlist
+                  </p>
+                  <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
+                    capacity has room
+                  </h2>
+                </div>
+                <ApproveNextWaitlistButton eventId={event.id} />
+              </div>
+            </section>
+          )}
 
           <DatePollCard eventId={event.id} poll={poll} />
 

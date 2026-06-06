@@ -7,9 +7,10 @@ import { updateRsvpCheckInAction } from "@/app/dashboard/events/[id]/actions";
 type CheckInButtonProps = {
   rsvpId: string;
   checkedIn: boolean;
+  canCheckIn?: boolean;
 };
 
-export function CheckInButton({ rsvpId, checkedIn }: CheckInButtonProps) {
+export function CheckInButton({ rsvpId, checkedIn, canCheckIn = true }: CheckInButtonProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -26,15 +27,17 @@ export function CheckInButton({ rsvpId, checkedIn }: CheckInButtonProps) {
       <input type="hidden" name="checkedIn" value={checkedIn ? "false" : "true"} />
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || (!canCheckIn && !checkedIn)}
         className={[
           "focus-ring rounded-full px-4 py-2 text-sm font-black transition hover:-translate-y-0.5",
-          checkedIn
+          !canCheckIn && !checkedIn
+            ? "bg-[color:var(--card)] text-[color:var(--muted)]"
+            : checkedIn
             ? "bg-lime-mute text-zinc-950"
             : "bg-[color:var(--card)] text-[color:var(--foreground)]",
         ].join(" ")}
       >
-        {pending ? "Updating" : checkedIn ? "Checked in" : "Check in"}
+        {pending ? "Updating" : checkedIn ? "Checked in" : canCheckIn ? "Check in" : "Not approved"}
       </button>
     </form>
   );

@@ -1,12 +1,6 @@
 import { v2 as cloudinary, type UploadApiResponse } from "cloudinary";
-
-export function isCloudinaryConfigured() {
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET,
-  );
-}
+export { isCloudinaryConfigured } from "@/lib/env";
+import { isCloudinaryConfigured } from "@/lib/env";
 
 function configureCloudinary() {
   if (!isCloudinaryConfigured()) {

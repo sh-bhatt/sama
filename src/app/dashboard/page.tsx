@@ -13,7 +13,7 @@ import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured } from "@/lib/auth/config";
-import { formatDateTimeLabel, isUpcomingEvent } from "@/lib/date";
+import { formatDateTimeLabel } from "@/lib/date";
 import { dashboardStats, demoEvent, hostEvents, recentActivity } from "@/lib/mock-data";
 import { prisma } from "@/lib/prisma";
 import { dashboardChannel } from "@/lib/realtime/events";
@@ -73,6 +73,7 @@ export default async function DashboardPage() {
                 id: true,
                 checkedIn: true,
                 status: true,
+                approvalStatus: true,
               },
             },
             activities: {
@@ -88,6 +89,14 @@ export default async function DashboardPage() {
         })
       : [];
   const totalRsvps = realEvents.reduce((total, event) => total + event._count.rsvps, 0);
+  const approvedGuests = realEvents.reduce(
+    (total, event) => total + event.rsvps.filter((rsvp) => rsvp.approvalStatus === "APPROVED").length,
+    0,
+  );
+  const pendingApprovals = realEvents.reduce(
+    (total, event) => total + event.rsvps.filter((rsvp) => rsvp.approvalStatus === "PENDING").length,
+    0,
+  );
   const checkedInGuests = realEvents.reduce(
     (total, event) => total + event.rsvps.filter((rsvp) => rsvp.checkedIn).length,
     0,
@@ -101,15 +110,16 @@ export default async function DashboardPage() {
       ? [
           { label: "live events", value: String(realEvents.length), detail: "saved invites" },
           {
-            label: "guest energy",
+            label: "total RSVPs",
             value: String(totalRsvps),
-            detail: "real RSVP count",
+            detail: "all guest replies",
           },
           {
-            label: "upcoming",
-            value: String(realEvents.filter((event) => isUpcomingEvent(event.eventDate)).length),
-            detail: "rooms ahead",
+            label: "approved",
+            value: String(approvedGuests),
+            detail: "cleared guests",
           },
+          { label: "pending", value: String(pendingApprovals), detail: "need host approval" },
           { label: "check-ins", value: String(checkedInGuests), detail: "guests at the room" },
         ]
       : dashboardStats;
@@ -227,6 +237,9 @@ export default async function DashboardPage() {
                 <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                   {realEvents.map((event) => {
                     const inviteUrl = `${origin}/invite/${event.slug}`;
+                    const eventPendingApprovals = event.rsvps.filter(
+                      (rsvp) => rsvp.approvalStatus === "PENDING",
+                    ).length;
 
                     return (
                       <article
@@ -251,8 +264,13 @@ export default async function DashboardPage() {
                           </p>
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-lime-mute">
-                              {event._count.rsvps} RSVPs
-                            </span>
+                            {event._count.rsvps} RSVPs
+                          </span>
+                            {eventPendingApprovals > 0 && (
+                              <span className="rounded-full bg-saffron-200 px-3 py-1.5 text-xs font-black text-zinc-950">
+                                {eventPendingApprovals} pending
+                              </span>
+                            )}
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-white">
                               {event.rsvps.filter((rsvp) => rsvp.checkedIn).length} checked in
                             </span>
@@ -300,7 +318,7 @@ export default async function DashboardPage() {
               <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-4">
                 <PulseCard label="new RSVPs today" value="18" accent="lime" />
                 <PulseCard label="WhatsApp shares" value="7" accent="rose" />
-                <PulseCard label="guests checked in" value={String(checkedInGuests)} accent="blue" />
+                <PulseCard label="pending approvals" value={String(pendingApprovals)} accent="blue" />
                 <PulseCard label="total RSVPs" value={String(totalRsvps)} accent="saffron" />
               </div>
             </section>

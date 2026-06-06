@@ -1,6 +1,8 @@
-import type { PaymentStatus, RSVPStatus } from "@prisma/client";
+import type { ApprovalStatus, PaymentStatus, RSVPStatus } from "@prisma/client";
 import Link from "next/link";
 import { formatEventDateShort } from "@/lib/date";
+import { ApprovalStatusBadge } from "@/components/dashboard/approval-status-badge";
+import { ApprovalStatusControl } from "@/components/dashboard/approval-status-control";
 import { CheckInButton } from "@/components/dashboard/check-in-button";
 import { DeleteRsvpButton } from "@/components/dashboard/delete-rsvp-button";
 import { PaymentStatusControl } from "@/components/dashboard/payment-status-control";
@@ -12,6 +14,7 @@ type Guest = {
   email: string | null;
   phone: string | null;
   status: RSVPStatus;
+  approvalStatus: ApprovalStatus;
   plusOne: boolean;
   note: string | null;
   paymentStatus: PaymentStatus;
@@ -56,6 +59,7 @@ export function GuestList({ guests, inviteUrl, checkInBaseUrl }: GuestListProps)
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-xl font-black text-white">{guest.name}</h3>
                   <RsvpStatusBadge status={guest.status} />
+                  <ApprovalStatusBadge status={guest.approvalStatus} />
                   {guest.plusOne && (
                     <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white">
                       +1
@@ -73,7 +77,11 @@ export function GuestList({ guests, inviteUrl, checkInBaseUrl }: GuestListProps)
                 )}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
-                <CheckInButton rsvpId={guest.id} checkedIn={guest.checkedIn} />
+                <CheckInButton
+                  rsvpId={guest.id}
+                  checkedIn={guest.checkedIn}
+                  canCheckIn={guest.approvalStatus === "APPROVED"}
+                />
                 <DeleteRsvpButton rsvpId={guest.id} />
                 <Link
                   href={`${checkInBaseUrl}?rsvpId=${guest.id}`}
@@ -82,6 +90,20 @@ export function GuestList({ guests, inviteUrl, checkInBaseUrl }: GuestListProps)
                   Check-in QR
                 </Link>
               </div>
+            </div>
+            <div className="mt-4">
+              {guest.approvalStatus !== "APPROVED" && (
+                <p className="mb-3 rounded-2xl bg-saffron-200/12 px-4 py-3 text-sm font-black text-saffron-200">
+                  This guest is not approved for check-in yet.
+                </p>
+              )}
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
+                approval status
+              </p>
+              <ApprovalStatusControl
+                rsvpId={guest.id}
+                approvalStatus={guest.approvalStatus}
+              />
             </div>
             <div className="mt-4">
               <p className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
