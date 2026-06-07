@@ -62,49 +62,78 @@ export default async function DashboardPage() {
     userResult.clerkUser?.firstName ||
     primaryEmail?.split("@")[0] ||
     "host";
-  const realEvents =
-    userResult.status === "ready" && userResult.dbUser
-      ? await prisma.event.findMany({
-          where: { hostId: userResult.dbUser.id },
-          orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
-          include: {
-            rsvps: {
-              select: {
-                id: true,
-                checkedIn: true,
-                status: true,
-                approvalStatus: true,
-              },
-            },
-            activities: {
-              orderBy: { createdAt: "desc" },
-              take: 2,
-            },
-            datePolls: {
-              select: { id: true },
-              take: 1,
-            },
-            _count: { select: { rsvps: true } },
-          },
-        })
-      : [];
+  const dbUser = userResult.status === "ready" ? userResult.dbUser : null;
+  const dashboardData =
+    dbUser
+      ? await (async () => {
+          try {
+            const [events, rsvpGroups, latestActivity] = await Promise.all([
+              prisma.event.findMany({
+                where: { hostId: dbUser.id },
+                orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  eventDate: true,
+                  eventTime: true,
+                  location: true,
+                  city: true,
+                  category: true,
+                  theme: true,
+                  visibility: true,
+                  capacity: true,
+                  requiresApproval: true,
+                  waitlistEnabled: true,
+                  datePolls: { select: { id: true }, take: 1 },
+                  _count: { select: { rsvps: true, memoryPhotos: true } },
+                },
+              }),
+              prisma.rSVP.groupBy({
+                by: ["eventId", "approvalStatus", "checkedIn"],
+                where: { event: { hostId: dbUser.id } },
+                _count: { _all: true },
+              }),
+              prisma.eventActivity.findMany({
+                where: { event: { hostId: dbUser.id } },
+                orderBy: { createdAt: "desc" },
+                take: 5,
+                select: {
+                  id: true,
+                  message: true,
+                  createdAt: true,
+                  event: { select: { title: true } },
+                },
+              }),
+            ]);
+
+            return { status: "ready" as const, events, rsvpGroups, latestActivity };
+          } catch (error) {
+            console.warn("Dashboard data load failed:", error);
+            return { status: "database-error" as const, events: [], rsvpGroups: [], latestActivity: [] };
+          }
+        })()
+      : { status: "idle" as const, events: [], rsvpGroups: [], latestActivity: [] };
+  const realEvents = dashboardData.events;
+  const rsvpCountFor = (eventId: string, predicate: (group: (typeof dashboardData.rsvpGroups)[number]) => boolean) =>
+    dashboardData.rsvpGroups
+      .filter((group) => group.eventId === eventId && predicate(group))
+      .reduce((total, group) => total + group._count._all, 0);
   const totalRsvps = realEvents.reduce((total, event) => total + event._count.rsvps, 0);
-  const approvedGuests = realEvents.reduce(
-    (total, event) => total + event.rsvps.filter((rsvp) => rsvp.approvalStatus === "APPROVED").length,
-    0,
-  );
-  const pendingApprovals = realEvents.reduce(
-    (total, event) => total + event.rsvps.filter((rsvp) => rsvp.approvalStatus === "PENDING").length,
-    0,
-  );
-  const checkedInGuests = realEvents.reduce(
-    (total, event) => total + event.rsvps.filter((rsvp) => rsvp.checkedIn).length,
-    0,
-  );
-  const latestActivity = realEvents
-    .flatMap((event) => event.activities.map((activity) => ({ ...activity, eventTitle: event.title })))
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-    .slice(0, 5);
+  const approvedGuests = dashboardData.rsvpGroups
+    .filter((group) => group.approvalStatus === "APPROVED")
+    .reduce((total, group) => total + group._count._all, 0);
+  const pendingApprovals = dashboardData.rsvpGroups
+    .filter((group) => group.approvalStatus === "PENDING")
+    .reduce((total, group) => total + group._count._all, 0);
+  const checkedInGuests = dashboardData.rsvpGroups
+    .filter((group) => group.checkedIn)
+    .reduce((total, group) => total + group._count._all, 0);
+  const latestActivity = dashboardData.latestActivity.map((activity) => ({
+    id: activity.id,
+    message: activity.message,
+    eventTitle: activity.event.title,
+  }));
   const realStats =
     userResult.status === "ready"
       ? [
@@ -194,7 +223,7 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {userResult.status === "database-error" && (
+        {(userResult.status === "database-error" || dashboardData.status === "database-error") && (
           <section className="theme-panel rounded-[1.5rem] border p-5">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
               database sync failed
@@ -237,9 +266,11 @@ export default async function DashboardPage() {
                 <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                   {realEvents.map((event) => {
                     const inviteUrl = `${origin}/invite/${event.slug}`;
-                    const eventPendingApprovals = event.rsvps.filter(
-                      (rsvp) => rsvp.approvalStatus === "PENDING",
-                    ).length;
+                    const eventPendingApprovals = rsvpCountFor(
+                      event.id,
+                      (group) => group.approvalStatus === "PENDING",
+                    );
+                    const eventCheckedIn = rsvpCountFor(event.id, (group) => group.checkedIn);
 
                     return (
                       <article
@@ -272,7 +303,7 @@ export default async function DashboardPage() {
                               </span>
                             )}
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-white">
-                              {event.rsvps.filter((rsvp) => rsvp.checkedIn).length} checked in
+                              {eventCheckedIn} checked in
                             </span>
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-rose-neon">
                               {event.visibility}

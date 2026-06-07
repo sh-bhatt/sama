@@ -70,6 +70,29 @@ function InviteNotFound() {
   );
 }
 
+function InviteDatabaseError() {
+  return (
+    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+            invite temporarily unavailable
+          </p>
+          <h1 className="theme-heading mt-3 text-4xl font-black lowercase">
+            the room needs a refresh
+          </h1>
+          <p className="theme-muted mt-4 font-semibold leading-7">
+            Sama could not reach the event database just now. Try again in a moment.
+          </p>
+          <Link href="/" className="focus-ring theme-action mt-6 inline-flex rounded-full px-5 py-3 font-black">
+            Back to discovery
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default async function InvitePage({ params }: InvitePageProps) {
   if (!isDatabaseConfigured()) {
     return (
@@ -95,48 +118,104 @@ export default async function InvitePage({ params }: InvitePageProps) {
   }
 
   const { slug } = await params;
-  const event = await prisma.event.findUnique({
-    where: { slug },
-    include: {
-      host: true,
-      rsvps: {
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          approvalStatus: true,
-          plusOne: true,
-          createdAt: true,
+  const eventResult = await prisma.event
+    .findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        eventDate: true,
+        eventTime: true,
+        location: true,
+        theme: true,
+        city: true,
+        category: true,
+        visibility: true,
+        capacity: true,
+        requiresApproval: true,
+        waitlistEnabled: true,
+        upiId: true,
+        paymentNote: true,
+        host: { select: { name: true, email: true } },
+        rsvps: {
+          where: { approvalStatus: "APPROVED" },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            approvalStatus: true,
+            plusOne: true,
+          },
         },
-      },
-      activities: {
-        where: { type: { in: ["RSVP_CREATED", "RSVP_UPDATED"] } },
-        orderBy: { createdAt: "desc" },
-        take: 4,
-      },
-      datePolls: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        include: {
-          options: {
-            orderBy: { optionDate: "asc" },
-            include: { _count: { select: { votes: true } } },
+        activities: {
+          where: { type: { in: ["RSVP_CREATED", "RSVP_UPDATED"] } },
+          orderBy: { createdAt: "desc" },
+          take: 4,
+          select: { id: true, message: true },
+        },
+        datePolls: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            id: true,
+            question: true,
+            options: {
+              orderBy: { optionDate: "asc" },
+              select: {
+                id: true,
+                optionDate: true,
+                label: true,
+                _count: { select: { votes: true } },
+              },
+            },
+          },
+        },
+        infoBlocks: {
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            content: true,
+            url: true,
+          },
+        },
+        rsvpQuestions: {
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+          select: {
+            id: true,
+            type: true,
+            question: true,
+            options: true,
+            required: true,
+          },
+        },
+        memoryPhotos: {
+          where: { approved: true },
+          orderBy: { createdAt: "desc" },
+          take: 6,
+          select: {
+            id: true,
+            imageUrl: true,
+            caption: true,
           },
         },
       },
-      memoryPhotos: {
-        where: { approved: true },
-        orderBy: { createdAt: "desc" },
-        take: 6,
-        select: {
-          id: true,
-          imageUrl: true,
-          caption: true,
-        },
-      },
-    },
-  });
+    })
+    .then((event) => ({ status: "ready" as const, event }))
+    .catch((error) => {
+      console.warn("Invite data load failed:", error);
+      return { status: "database-error" as const, event: null };
+    });
+
+  if (eventResult.status === "database-error") {
+    return <InviteDatabaseError />;
+  }
+
+  const event = eventResult.event;
 
   if (!event) {
     return <InviteNotFound />;
@@ -232,6 +311,35 @@ export default async function InvitePage({ params }: InvitePageProps) {
             </section>
           )}
 
+          {event.infoBlocks.length > 0 && (
+            <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                event info
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {event.infoBlocks.map((block) => (
+                  <article key={block.id} className="rounded-[1.5rem] bg-black/35 px-4 py-4">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-lime-mute">
+                      {block.type.toLowerCase()}
+                    </p>
+                    <h2 className="theme-heading mt-2 text-xl font-black">{block.title}</h2>
+                    <p className="theme-muted mt-2 text-sm font-semibold leading-6">{block.content}</p>
+                    {block.url && (
+                      <a
+                        href={block.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="focus-ring mt-3 inline-flex rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
+                      >
+                        Open link
+                      </a>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
           <AddToCalendar googleUrl={googleCalendarUrl} icsUrl={icsUrl} />
 
           {poll && (
@@ -296,7 +404,17 @@ export default async function InvitePage({ params }: InvitePageProps) {
         </div>
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-5 lg:self-start">
-          <RsvpForm slug={event.slug} goingFull={goingFull} />
+          <RsvpForm
+            slug={event.slug}
+            goingFull={goingFull}
+            questions={event.rsvpQuestions.map((question) => ({
+              id: question.id,
+              type: question.type,
+              question: question.question,
+              options: question.options,
+              required: question.required,
+            }))}
+          />
 
           <section className="theme-panel rounded-[2rem] border p-5">
             <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-rose-neon">share</p>

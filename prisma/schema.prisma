@@ -50,6 +50,8 @@ model Event {
   activities   EventActivity[]
   datePolls    DatePoll[]
   memoryPhotos MemoryPhoto[]
+  infoBlocks   EventInfoBlock[]
+  rsvpQuestions RsvpQuestion[]
 
   @@index([hostId])
   @@index([slug])
@@ -73,10 +75,60 @@ model RSVP {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  answers RsvpAnswer[]
+
   @@index([eventId])
   @@index([email])
   @@index([phone])
   @@index([approvalStatus])
+}
+
+model EventInfoBlock {
+  id        String        @id @default(cuid())
+  eventId   String
+  event     Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type      InfoBlockType @default(TEXT)
+  title     String
+  content   String
+  url       String?
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([eventId])
+  @@index([sortOrder])
+}
+
+model RsvpQuestion {
+  id        String           @id @default(cuid())
+  eventId   String
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type      RsvpQuestionType @default(TEXT)
+  question  String
+  options   String[]         @default([])
+  required  Boolean          @default(false)
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  answers RsvpAnswer[]
+
+  @@index([eventId])
+  @@index([sortOrder])
+}
+
+model RsvpAnswer {
+  id         String       @id @default(cuid())
+  rsvpId     String
+  rsvp       RSVP         @relation(fields: [rsvpId], references: [id], onDelete: Cascade)
+  questionId String
+  question   RsvpQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer     String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([rsvpId])
+  @@index([questionId])
 }
 
 model EventActivity {
@@ -159,4 +211,19 @@ enum ApprovalStatus {
   PENDING
   REJECTED
   WAITLISTED
+}
+
+enum InfoBlockType {
+  TEXT
+  LINK
+  FAQ
+  NOTE
+}
+
+enum RsvpQuestionType {
+  TEXT
+  SHORT_TEXT
+  LONG_TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
 }

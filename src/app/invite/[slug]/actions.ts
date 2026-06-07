@@ -8,6 +8,7 @@ import {
   parseRsvpFormData,
   type RsvpActionState,
 } from "@/lib/validations/rsvp";
+import { parseRsvpAnswers } from "@/lib/validations/rsvp-question";
 import {
   initialPollVoteActionState,
   parsePollVoteFormData,
@@ -128,11 +129,20 @@ export async function submitRsvpAction(
       capacity: true,
       requiresApproval: true,
       waitlistEnabled: true,
+      rsvpQuestions: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      },
     },
   });
 
   if (!event) {
     return { status: "error", message: "This invite is no longer available." };
+  }
+
+  const parsedAnswers = parseRsvpAnswers(formData, event.rsvpQuestions);
+
+  if (!parsedAnswers.success) {
+    return { status: "error", message: parsedAnswers.message };
   }
 
   const existingRsvp =
@@ -199,6 +209,24 @@ export async function submitRsvpAction(
       message: statusMessage(rsvp.name, rsvp.status, rsvp.approvalStatus),
     },
   });
+
+  const questionIds = event.rsvpQuestions.map((question) => question.id);
+
+  if (questionIds.length > 0) {
+    await prisma.rsvpAnswer.deleteMany({
+      where: { rsvpId: rsvp.id, questionId: { in: questionIds } },
+    });
+
+    if (parsedAnswers.answers.length > 0) {
+      await prisma.rsvpAnswer.createMany({
+        data: parsedAnswers.answers.map((answer) => ({
+          rsvpId: rsvp.id,
+          questionId: answer.questionId,
+          answer: answer.answer,
+        })),
+      });
+    }
+  }
 
   revalidatePath(`/invite/${event.slug}`);
   revalidatePath(`/dashboard/events/${event.id}`);

@@ -92,30 +92,123 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
     );
   }
 
-  const event = await prisma.event.findFirst({
-    where: { id, hostId: currentUser.dbUser.id },
-    include: {
-      rsvps: { orderBy: { createdAt: "desc" } },
+  const eventResult = await prisma.event
+    .findFirst({
+      where: { id, hostId: currentUser.dbUser.id },
+      select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      eventDate: true,
+      eventTime: true,
+      location: true,
+      city: true,
+      category: true,
+      theme: true,
+      visibility: true,
+      capacity: true,
+      allowPlusOne: true,
+      requiresApproval: true,
+      waitlistEnabled: true,
+      upiId: true,
+      paymentNote: true,
+      rsvps: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          status: true,
+          approvalStatus: true,
+          plusOne: true,
+          note: true,
+          paymentStatus: true,
+          checkedIn: true,
+          createdAt: true,
+          answers: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              answer: true,
+              question: { select: { id: true, question: true } },
+            },
+          },
+        },
+      },
       activities: {
         orderBy: { createdAt: "desc" },
-        take: 12,
+        take: 15,
+        select: {
+          id: true,
+          type: true,
+          message: true,
+          createdAt: true,
+        },
       },
       datePolls: {
         orderBy: { createdAt: "desc" },
         take: 1,
-        include: {
+        select: {
+          id: true,
+          question: true,
           options: {
             orderBy: { optionDate: "asc" },
-            include: { _count: { select: { votes: true } } },
+            select: {
+              id: true,
+              optionDate: true,
+              label: true,
+              _count: { select: { votes: true } },
+            },
           },
         },
       },
       memoryPhotos: {
         orderBy: { createdAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          imageUrl: true,
+          caption: true,
+          uploaderName: true,
+          uploadedBy: true,
+        },
       },
-      _count: { select: { rsvps: true } },
-    },
-  });
+      infoBlocks: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+      rsvpQuestions: {
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          question: true,
+        },
+      },
+      _count: { select: { rsvps: true, memoryPhotos: true } },
+      },
+    })
+    .then((event) => ({ status: "ready" as const, event }))
+    .catch((error) => {
+      console.warn("Manage event data load failed:", error);
+      return { status: "database-error" as const, event: null };
+    });
+
+  if (eventResult.status === "database-error") {
+    return (
+      <SetupMessage
+        label="database unavailable"
+        title="the event room needs a refresh"
+        body="Sama could not reach Neon just now. Try again in a moment."
+      />
+    );
+  }
+
+  const event = eventResult.event;
 
   if (!event) {
     notFound();
@@ -300,9 +393,74 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
 
           <DatePollCard eventId={event.id} poll={poll} />
 
+          <section className="grid gap-4 lg:grid-cols-2">
+            <article className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+                    event details
+                  </p>
+                  <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
+                    {event.infoBlocks.length} info blocks
+                  </h2>
+                </div>
+                <Link
+                  href={`/dashboard/events/${event.id}/info-blocks`}
+                  className="focus-ring theme-action inline-flex rounded-full px-4 py-2 text-sm font-black"
+                >
+                  Edit info
+                </Link>
+              </div>
+              <div className="mt-4 space-y-2">
+                {event.infoBlocks.slice(0, 3).map((block) => (
+                  <p key={block.id} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                    {block.title}
+                  </p>
+                ))}
+                {!event.infoBlocks.length && (
+                  <p className="theme-muted rounded-2xl bg-black/35 px-4 py-3 text-sm font-semibold">
+                    Add dress code, parking, links, or FAQs.
+                  </p>
+                )}
+              </div>
+            </article>
+
+            <article className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                    RSVP form
+                  </p>
+                  <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
+                    {event.rsvpQuestions.length} questions
+                  </h2>
+                </div>
+                <Link
+                  href={`/dashboard/events/${event.id}/questions`}
+                  className="focus-ring theme-action inline-flex rounded-full px-4 py-2 text-sm font-black"
+                >
+                  Edit questions
+                </Link>
+              </div>
+              <div className="mt-4 space-y-2">
+                {event.rsvpQuestions.slice(0, 3).map((question) => (
+                  <p key={question.id} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                    {question.question}
+                  </p>
+                ))}
+                {!event.rsvpQuestions.length && (
+                  <p className="theme-muted rounded-2xl bg-black/35 px-4 py-3 text-sm font-semibold">
+                    Ask for song requests, food notes, or any custom detail.
+                  </p>
+                )}
+              </div>
+            </article>
+          </section>
+
           <MemoriesManagementCard
             slug={event.slug}
             memories={event.memoryPhotos}
+            totalCount={event._count.memoryPhotos}
           />
 
           <GuestList guests={event.rsvps} inviteUrl={inviteUrl} checkInBaseUrl={checkInUrl} />

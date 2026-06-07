@@ -70,7 +70,15 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-Use a Neon pooled `DATABASE_URL` for Prisma, for example with `sslmode=require`, a small `connection_limit`, and a longer `pool_timeout`.
+Use a Neon pooled `DATABASE_URL` for app runtime, for example:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST-POOLER/DB?sslmode=require&connection_limit=5&pool_timeout=20"
+```
+
+Local dev servers, Prisma Studio, and stuck Node processes can hold Neon pool connections. On Windows, close extra terminals and Prisma Studio tabs first; if a Prisma engine DLL or connection pool stays locked, `taskkill /F /IM node.exe` can clear local Node processes before retrying `npx prisma generate` or `npm run build`.
+
+`DIRECT_URL` is not currently required by this schema. If you later add `directUrl = env("DIRECT_URL")` to `prisma/schema.prisma`, set `DIRECT_URL` to the direct Neon connection string for migrations/db push while keeping `DATABASE_URL` as the pooled runtime URL.
 
 ## Local Setup
 

@@ -13,9 +13,11 @@ type DashboardMemory = {
 export function MemoriesManagementCard({
   slug,
   memories,
+  totalCount = memories.length,
 }: {
   slug: string;
   memories: DashboardMemory[];
+  totalCount?: number;
 }) {
   return (
     <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
@@ -25,7 +27,7 @@ export function MemoriesManagementCard({
             memories
           </p>
           <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
-            {memories.length} photos in the room
+            {totalCount} photos in the room
           </h2>
         </div>
         <Link

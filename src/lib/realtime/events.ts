@@ -18,6 +18,13 @@ export const realtimeEventTypes = [
   "MEMORY_ADDED",
   "MEMORY_DELETED",
   "MEMORY_UPDATED",
+  "INFO_BLOCK_CREATED",
+  "INFO_BLOCK_UPDATED",
+  "INFO_BLOCK_DELETED",
+  "RSVP_QUESTION_CREATED",
+  "RSVP_QUESTION_UPDATED",
+  "RSVP_QUESTION_DELETED",
+  "RSVP_ANSWER_UPDATED",
 ] as const;
 
 export type RealtimeEventType = (typeof realtimeEventTypes)[number];

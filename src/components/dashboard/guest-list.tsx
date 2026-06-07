@@ -20,6 +20,14 @@ type Guest = {
   paymentStatus: PaymentStatus;
   checkedIn: boolean;
   createdAt: Date;
+  answers?: {
+    id: string;
+    answer: string;
+    question: {
+      id: string;
+      question: string;
+    };
+  }[];
 };
 
 type GuestListProps = {
@@ -74,6 +82,23 @@ export function GuestList({ guests, inviteUrl, checkInBaseUrl }: GuestListProps)
                   <p className="mt-3 rounded-2xl bg-white/8 px-4 py-3 text-sm font-bold text-zinc-300">
                     {guest.note}
                   </p>
+                )}
+                {guest.answers && guest.answers.length > 0 && (
+                  <details className="mt-3 rounded-2xl bg-white/8 px-4 py-3">
+                    <summary className="cursor-pointer text-sm font-black text-lime-mute">
+                      RSVP answers
+                    </summary>
+                    <div className="mt-3 space-y-3">
+                      {guest.answers.map((item) => (
+                        <div key={item.id}>
+                          <p className="text-xs font-black uppercase tracking-[0.12em] text-zinc-500">
+                            {item.question.question}
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-zinc-300">{item.answer}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 )}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">

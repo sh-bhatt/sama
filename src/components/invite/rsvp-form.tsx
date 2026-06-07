@@ -11,6 +11,13 @@ import {
 type RsvpFormProps = {
   slug: string;
   goingFull: boolean;
+  questions?: {
+    id: string;
+    type: "TEXT" | "SHORT_TEXT" | "LONG_TEXT" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE";
+    question: string;
+    options: string[];
+    required: boolean;
+  }[];
 };
 
 const statusOptions = [
@@ -19,7 +26,7 @@ const statusOptions = [
   { label: "Can't make it", value: "NOT_GOING" },
 ] as const;
 
-export function RsvpForm({ slug, goingFull }: RsvpFormProps) {
+export function RsvpForm({ slug, goingFull, questions = [] }: RsvpFormProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<RsvpActionState, FormData>(
     submitRsvpAction,
@@ -122,6 +129,74 @@ export function RsvpForm({ slug, goingFull }: RsvpFormProps) {
             className="focus-ring mt-2 w-full resize-none rounded-2xl border border-white/10 bg-white/8 px-4 py-3 font-bold text-white placeholder:text-zinc-500"
           />
         </label>
+
+        {questions.length > 0 && (
+          <div className="space-y-4 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+                host questions
+              </p>
+              <p className="mt-1 text-sm font-bold text-zinc-400">
+                These answers are private to the host.
+              </p>
+            </div>
+            {questions.map((question) => (
+              <fieldset key={question.id} className="space-y-2">
+                <legend className="text-sm font-black text-zinc-300">
+                  {question.question}
+                  {question.required && <span className="text-rose-neon"> *</span>}
+                </legend>
+                {question.type === "LONG_TEXT" || question.type === "TEXT" ? (
+                  <textarea
+                    name={`answer:${question.id}`}
+                    rows={3}
+                    required={question.required}
+                    maxLength={300}
+                    className="focus-ring w-full resize-none rounded-2xl border border-white/10 bg-white/8 px-4 py-3 font-bold text-white placeholder:text-zinc-500"
+                    placeholder="Your answer"
+                  />
+                ) : question.type === "SINGLE_CHOICE" ? (
+                  <div className="grid gap-2">
+                    {question.options.map((option) => (
+                      <label key={option} className="flex items-center gap-3 rounded-2xl bg-white/8 px-4 py-3">
+                        <input
+                          type="radio"
+                          name={`answer:${question.id}`}
+                          value={option}
+                          required={question.required}
+                          className="size-4 accent-lime-mute"
+                        />
+                        <span className="text-sm font-bold text-white">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : question.type === "MULTIPLE_CHOICE" ? (
+                  <div className="grid gap-2">
+                    {question.options.map((option) => (
+                      <label key={option} className="flex items-center gap-3 rounded-2xl bg-white/8 px-4 py-3">
+                        <input
+                          type="checkbox"
+                          name={`answer:${question.id}`}
+                          value={option}
+                          className="size-4 accent-lime-mute"
+                        />
+                        <span className="text-sm font-bold text-white">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <input
+                    name={`answer:${question.id}`}
+                    required={question.required}
+                    maxLength={300}
+                    className="focus-ring w-full rounded-2xl border border-white/10 bg-white/8 px-4 py-3 font-bold text-white placeholder:text-zinc-500"
+                    placeholder="Your answer"
+                  />
+                )}
+              </fieldset>
+            ))}
+          </div>
+        )}
 
         <button
           type="submit"
