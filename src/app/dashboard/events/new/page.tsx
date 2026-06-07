@@ -71,6 +71,7 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
           <div className="flex items-center gap-2">
+            <Link href="/discover" className="text-sm font-black text-lime-mute">Discover</Link>
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">Dashboard</Link>
             <ThemeToggle />
           </div>
@@ -131,6 +132,9 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
                     <option value="public">Public</option>
                     <option value="private">Private link</option>
                   </select>
+                  <span className="theme-muted mt-2 block text-sm font-semibold">
+                    Public events can appear in Discover. Private events are visible only by link.
+                  </span>
                 </label>
               </div>
             </section>

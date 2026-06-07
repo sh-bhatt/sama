@@ -271,6 +271,9 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             Sama
           </Link>
           <div className="flex items-center gap-2">
+            <Link href="/discover" className="text-sm font-black text-lime-mute">
+              Discover
+            </Link>
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">
               Dashboard
             </Link>

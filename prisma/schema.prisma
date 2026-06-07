@@ -10,15 +10,22 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   clerkId   String   @unique
+  username  String?  @unique
   name      String?
   email     String?  @unique
   imageUrl  String?
+  bio       String?
+  location  String?
+  instagramUrl String?
+  websiteUrl   String?
+  publicProfile Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   events Event[]
 
   @@index([clerkId])
+  @@index([username])
   @@index([email])
 }
 
@@ -53,6 +60,7 @@ model Event {
   infoBlocks   EventInfoBlock[]
   rsvpQuestions RsvpQuestion[]
   broadcasts EventBroadcast[]
+  interests  EventInterest[]
 
   @@index([hostId])
   @@index([slug])
@@ -114,6 +122,22 @@ model EventBroadcast {
   @@index([eventId])
   @@index([audience])
   @@index([createdAt])
+}
+
+model EventInterest {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String?
+  guestId   String?
+  name      String?
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([userId])
+  @@index([guestId])
+  @@unique([eventId, userId])
+  @@unique([eventId, guestId])
 }
 
 model RsvpQuestion {

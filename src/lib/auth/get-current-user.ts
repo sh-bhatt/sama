@@ -49,7 +49,6 @@ export async function getCurrentUser(): Promise<CurrentUserResult> {
     const dbUser = await prisma.user.upsert({
       where: { clerkId: userId },
       update: {
-        name: clerkUser.fullName,
         email: primaryEmail,
         imageUrl: clerkUser.imageUrl,
       },

@@ -13,7 +13,7 @@ export function RecentRsvps() {
       </p>
       <div className="mt-5 space-y-3">
         {rsvps.map((item, index) => (
-          <div key={item} className="flex items-center gap-3 rounded-2xl bg-black/35 px-4 py-3">
+          <div key={`${item}-${index}`} className="flex items-center gap-3 rounded-2xl bg-black/35 px-4 py-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-rose-neon to-lime-mute text-xs font-black text-zinc-950">
               {index + 1}
             </span>

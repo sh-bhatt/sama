@@ -29,6 +29,9 @@ export const realtimeEventTypes = [
   "BROADCAST_DELETED",
   "BROADCAST_UPDATED",
   "BROADCAST_PINNED",
+  "INTEREST_CREATED",
+  "INTEREST_REMOVED",
+  "PROFILE_UPDATED",
 ] as const;
 
 export type RealtimeEventType = (typeof realtimeEventTypes)[number];

@@ -7,6 +7,7 @@ import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { PublicGuestPreview } from "@/components/invite/public-guest-preview";
 import { RsvpForm } from "@/components/invite/rsvp-form";
 import { RsvpSummary } from "@/components/invite/rsvp-summary";
+import { InterestButton } from "@/components/discovery/interest-button";
 import { MemoriesTeaser } from "@/components/memories/memories-teaser";
 import { PublicDatePoll } from "@/components/polls/public-date-poll";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
@@ -16,6 +17,7 @@ import { isDatabaseConfigured } from "@/lib/auth/config";
 import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
 import { demoEvent, recentActivity } from "@/lib/mock-data";
+import { getDisplayName, getOrganizerHref } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { eventChannel, inviteChannel } from "@/lib/realtime/events";
 import { createWhatsAppShareUrl } from "@/lib/whatsapp";
@@ -139,7 +141,18 @@ export default async function InvitePage({ params }: InvitePageProps) {
         waitlistEnabled: true,
         upiId: true,
         paymentNote: true,
-        host: { select: { name: true, email: true } },
+        host: {
+          select: {
+            name: true,
+            username: true,
+            imageUrl: true,
+            bio: true,
+            location: true,
+            instagramUrl: true,
+            websiteUrl: true,
+            publicProfile: true,
+          },
+        },
         rsvps: {
           where: { approvalStatus: "APPROVED" },
           orderBy: { createdAt: "desc" },
@@ -216,6 +229,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
             createdAt: true,
           },
         },
+        _count: { select: { interests: true } },
       },
     })
     .then((event) => ({ status: "ready" as const, event }))
@@ -243,7 +257,9 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const googleCalendarUrl = createGoogleCalendarUrl(event, inviteUrl);
   const icsUrl = `/api/events/${event.id}/calendar`;
   const dateLabel = formatEventDate(event.eventDate);
-  const hostName = event.host.name || event.host.email?.split("@")[0] || "your host";
+  const hostName = getDisplayName(event.host);
+  const organizerHref = getOrganizerHref(event.host);
+  const hostInitials = hostName.slice(0, 2).toUpperCase();
   const publicRsvps = event.rsvps.filter((rsvp) => rsvp.approvalStatus === "APPROVED");
   const goingCount = publicRsvps.filter((rsvp) => rsvp.status === "GOING").length;
   const maybeCount = publicRsvps.filter((rsvp) => rsvp.status === "MAYBE").length;
@@ -263,6 +279,15 @@ export default async function InvitePage({ params }: InvitePageProps) {
       label: option.label,
       votes: option._count.votes,
     })) || [];
+  const metaPills = [
+    { key: "city", label: event.city },
+    { key: "category", label: event.category },
+    { key: "theme", label: event.theme },
+    {
+      key: "visibility",
+      label: event.visibility === "private" ? "private link" : "public",
+    },
+  ].filter((pill): pill is { key: string; label: string } => Boolean(pill.label));
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden pb-28 text-foreground lg:pb-0">
@@ -311,6 +336,21 @@ export default async function InvitePage({ params }: InvitePageProps) {
             notGoing={notGoingCount}
             capacity={event.capacity}
           />
+          {event.visibility === "public" && (
+            <section className="theme-panel rounded-[1.5rem] border p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                    public buzz
+                  </p>
+                  <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
+                    {event._count.interests} interested
+                  </h2>
+                </div>
+                <InterestButton eventId={event.id} initialCount={event._count.interests} />
+              </div>
+            </section>
+          )}
           {(event.requiresApproval || event.waitlistEnabled) && (
             <section className="theme-panel rounded-[1.5rem] border p-5">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
@@ -379,9 +419,9 @@ export default async function InvitePage({ params }: InvitePageProps) {
               <ShareWhatsAppButton href={whatsappUrl} />
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-              {[event.city, event.category, event.theme, event.visibility === "private" ? "private link" : "public"].filter(Boolean).map((item) => (
-                <span key={item} className="rounded-full bg-black/42 px-4 py-2 text-sm font-black text-white">
-                  {item}
+              {metaPills.map((pill) => (
+                <span key={pill.key} className="rounded-full bg-black/42 px-4 py-2 text-sm font-black text-white">
+                  {pill.label}
                 </span>
               ))}
             </div>
@@ -432,6 +472,56 @@ export default async function InvitePage({ params }: InvitePageProps) {
           />
 
           <section className="theme-panel rounded-[2rem] border p-5">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+              hosted by
+            </p>
+            <div className="mt-4 flex items-start gap-3">
+              <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-rose-neon to-lime-mute text-sm font-black text-zinc-950">
+                {event.host.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={event.host.imageUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  hostInitials
+                )}
+              </div>
+              <div className="min-w-0">
+                <h2 className="theme-heading text-xl font-black lowercase">{hostName}</h2>
+                {event.host.username && (
+                  <p className="mt-1 text-xs font-black text-rose-neon">@{event.host.username}</p>
+                )}
+                {event.host.location && (
+                  <p className="theme-muted mt-2 text-sm font-semibold">{event.host.location}</p>
+                )}
+              </div>
+            </div>
+            {event.host.publicProfile && event.host.bio && (
+              <p className="theme-muted mt-4 line-clamp-3 text-sm font-semibold leading-6">
+                {event.host.bio}
+              </p>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              {organizerHref && (
+                <Link
+                  href={organizerHref}
+                  className="focus-ring rounded-full bg-lime-mute px-4 py-2 text-sm font-black text-zinc-950"
+                >
+                  View profile
+                </Link>
+              )}
+              {event.host.publicProfile && event.host.instagramUrl && (
+                <a
+                  href={event.host.instagramUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
+                >
+                  Instagram
+                </a>
+              )}
+            </div>
+          </section>
+
+          <section className="theme-panel rounded-[2rem] border p-5">
             <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-rose-neon">share</p>
             <div className="flex flex-col gap-2">
               <CopyLinkButton value={inviteUrl} />
@@ -448,8 +538,8 @@ export default async function InvitePage({ params }: InvitePageProps) {
                       {item.message}
                     </p>
                   ))
-                : recentActivity.slice(0, 3).map((item) => (
-                    <p key={item} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                : recentActivity.slice(0, 3).map((item, index) => (
+                    <p key={`${item}-${index}`} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
                       {item}
                     </p>
                   ))}

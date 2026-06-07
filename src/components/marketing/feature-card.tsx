@@ -40,8 +40,8 @@ export function FeatureCard({ title, description, index, featured = false }: Fea
         </div>
         {featured ? (
           <div className="absolute right-4 top-4 space-y-2">
-            {["Riya is going", "21 June winning", "UPI note visible"].map((item) => (
-              <div key={item} className="rounded-full bg-white/72 px-3 py-1.5 text-xs font-bold text-plum-950">
+            {["Riya is going", "21 June winning", "UPI note visible"].map((item, badgeIndex) => (
+              <div key={`${item}-${badgeIndex}`} className="rounded-full bg-white/72 px-3 py-1.5 text-xs font-bold text-plum-950">
                 {item}
               </div>
             ))}

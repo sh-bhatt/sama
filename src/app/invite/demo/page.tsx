@@ -104,7 +104,7 @@ export default function DemoInvitePage() {
             <div className="mt-5 grid gap-2">
               {["Going", "Maybe", "Not going"].map((item, index) => (
                 <button
-                  key={item}
+                  key={`${item}-${index}`}
                   type="button"
                   className={[
                     "focus-ring rounded-2xl px-4 py-4 text-left font-black transition active:scale-[0.98]",
@@ -120,8 +120,8 @@ export default function DemoInvitePage() {
           <section className="theme-panel rounded-[2rem] border p-5">
             <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-rose-neon">activity</p>
             <div className="space-y-3">
-              {recentActivity.slice(0, 3).map((item) => (
-                <p key={item} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+              {recentActivity.slice(0, 3).map((item, index) => (
+                <p key={`${item}-${index}`} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
                   {item}
                 </p>
               ))}
@@ -142,7 +142,7 @@ export default function DemoInvitePage() {
       <div className="fixed inset-x-3 bottom-3 z-40 rounded-full border border-white/10 bg-zinc-950/92 p-2 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur lg:hidden">
         <div className="grid grid-cols-3 gap-2">
           {["Going", "Maybe", "Share"].map((item, index) => (
-            <button key={item} type="button" className={index === 0 ? "rounded-full bg-ivory px-3 py-3 text-sm font-black text-zinc-950" : "rounded-full bg-white/8 px-3 py-3 text-sm font-black text-white"}>
+            <button key={`${item}-${index}`} type="button" className={index === 0 ? "rounded-full bg-ivory px-3 py-3 text-sm font-black text-zinc-950" : "rounded-full bg-white/8 px-3 py-3 text-sm font-black text-white"}>
               {item}
             </button>
           ))}

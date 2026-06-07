@@ -9,6 +9,7 @@ import { PulseCard } from "@/components/dashboard/pulse-card";
 import { RecentRsvps } from "@/components/dashboard/recent-rsvps";
 import { EventCard } from "@/components/discovery/event-card";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
+import { ProfileCompletionCard } from "@/components/profile/profile-completion-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
@@ -161,6 +162,11 @@ export default async function DashboardPage() {
     userResult.status === "ready" && userResult.dbUser
       ? dashboardChannel(userResult.dbUser.id)
       : null;
+  const profileIncomplete = Boolean(
+    userResult.status === "ready" &&
+      userResult.dbUser &&
+      (!userResult.dbUser.username || !userResult.dbUser.bio),
+  );
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
@@ -168,6 +174,12 @@ export default async function DashboardPage() {
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="min-w-0 text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
           <div className="flex shrink-0 items-center gap-2">
+            <Link href="/discover" className="hidden text-sm font-black text-lime-mute sm:inline-flex">
+              Discover
+            </Link>
+            <Link href="/dashboard/profile" className="hidden text-sm font-black text-lime-mute sm:inline-flex">
+              Profile
+            </Link>
             <Link href="/dashboard/events/new" className="focus-ring theme-action rounded-full px-4 py-2 text-sm font-black">
               Create event
             </Link>
@@ -386,6 +398,8 @@ export default async function DashboardPage() {
           </div>
 
           <aside className="min-w-0 space-y-4 xl:sticky xl:top-6 xl:self-start">
+            {profileIncomplete && <ProfileCompletionCard />}
+
             <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">quick actions</p>
               <div className="mt-4 grid gap-3">
@@ -405,8 +419,8 @@ export default async function DashboardPage() {
                         {item.message} <span className="text-zinc-500">- {item.eventTitle}</span>
                       </p>
                     ))
-                  : recentActivity.map((item) => (
-                      <p key={item} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                  : recentActivity.map((item, index) => (
+                      <p key={`${item}-${index}`} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
                         {item}
                       </p>
                     ))}

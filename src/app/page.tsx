@@ -3,16 +3,67 @@ import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { CategoryPills } from "@/components/discovery/category-pills";
 import { CityCard } from "@/components/discovery/city-card";
+import { DiscoverSection } from "@/components/discovery/discover-section";
 import { EventRow } from "@/components/discovery/event-row";
 import { HeroDiscover } from "@/components/discovery/hero-discover";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { isClerkConfigured } from "@/lib/auth/config";
+import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
+import { getApprovedGoingCount } from "@/lib/discover";
 import { categories, cities, eventRows, moreCities } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const userId = isClerkConfigured() ? (await auth()).userId : null;
+  const realEvents = isDatabaseConfigured()
+    ? await prisma.event
+        .findMany({
+          where: {
+            visibility: "public",
+            eventDate: {
+              gte: new Date(
+                Date.UTC(
+                  new Date().getUTCFullYear(),
+                  new Date().getUTCMonth(),
+                  new Date().getUTCDate() - 1,
+                ),
+              ),
+            },
+          },
+          orderBy: { eventDate: "asc" },
+          take: 12,
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            eventDate: true,
+            eventTime: true,
+            location: true,
+            city: true,
+            category: true,
+            theme: true,
+            coverImage: true,
+            capacity: true,
+            requiresApproval: true,
+            waitlistEnabled: true,
+            host: { select: { name: true, username: true, publicProfile: true } },
+            rsvps: {
+              where: { approvalStatus: "APPROVED" },
+              select: { status: true, approvalStatus: true },
+            },
+            _count: { select: { interests: true, rsvps: true } },
+          },
+        })
+        .catch((error) => {
+          console.warn("Homepage public event load failed:", error);
+          return [];
+        })
+    : [];
+  const trendingEvents = [...realEvents]
+    .sort((a, b) => b._count.interests + getApprovedGoingCount(b) - (a._count.interests + getApprovedGoingCount(a)))
+    .slice(0, 5);
 
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
@@ -22,7 +73,7 @@ export default async function Home() {
             Sama
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-bold text-[color:var(--muted)] md:flex">
-            <a href="#discover" className="hover:text-[color:var(--foreground)]">Discover</a>
+            <Link href="/discover" className="hover:text-[color:var(--foreground)]">Discover</Link>
             <a href="#host" className="hover:text-[color:var(--foreground)]">Host</a>
             <a href="#cities" className="hover:text-[color:var(--foreground)]">Cities</a>
           </nav>
@@ -71,14 +122,36 @@ export default async function Home() {
       <HeroDiscover />
 
       <div id="discover" className="py-8">
-        <EventRow title={eventRows[0].title} events={eventRows[0].events} wide />
+        {realEvents.length ? (
+          <DiscoverSection title="trending tonight" events={trendingEvents} />
+        ) : (
+          <EventRow title={eventRows[0].title} events={eventRows[0].events} wide />
+        )}
         <CategoryPills categories={categories} />
         <div className="bg-ivory py-4 dark:bg-ivory">
-          <EventRow title={eventRows[1].title} events={eventRows[1].events} tone="light" />
+          {realEvents.length ? (
+            <DiscoverSection title="modern mehfil" events={realEvents.slice(0, 5)} tone="light" />
+          ) : (
+            <EventRow title={eventRows[1].title} events={eventRows[1].events} tone="light" />
+          )}
         </div>
-        {eventRows.slice(2).map((row) => (
-          <EventRow key={row.title} title={row.title} events={row.events} />
-        ))}
+        {realEvents.length ? (
+          <>
+            <DiscoverSection title="evenings & weekends" events={realEvents.slice(3, 9).length ? realEvents.slice(3, 9) : realEvents} />
+            <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
+              <Link
+                href="/discover"
+                className="focus-ring theme-action inline-flex rounded-full px-5 py-3 font-black"
+              >
+                Open full Discover
+              </Link>
+            </section>
+          </>
+        ) : (
+          eventRows.slice(2).map((row) => (
+            <EventRow key={row.title} title={row.title} events={row.events} />
+          ))
+        )}
       </div>
 
       <section id="cities" className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_20rem] lg:px-8">
@@ -105,14 +178,14 @@ export default async function Home() {
           </p>
           <div className="mt-4 space-y-3">
             {moreCities.map((city) => (
-              <button
+              <Link
                 key={city}
-                type="button"
+                href={`/discover?city=${encodeURIComponent(city)}`}
                 className="focus-ring flex w-full items-center justify-between rounded-2xl bg-[color:var(--card)] px-4 py-4 text-left font-black text-[color:var(--foreground)] transition hover:brightness-105"
               >
                 {city}
                 <span className="text-lime-mute">go</span>
-              </button>
+              </Link>
             ))}
           </div>
         </aside>
@@ -146,11 +219,10 @@ export default async function Home() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm font-bold text-[color:var(--muted)] sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[color:var(--foreground)]">Sama</p>
           <div className="flex flex-wrap gap-4">
-            {["Create an event for free", "Help Center", "Blog", "Discover"].map((item) => (
-              <a key={item} href="#discover" className="hover:text-white">
-                {item}
-              </a>
-            ))}
+            <Link href="/dashboard/events/new" className="hover:text-white">Create an event for free</Link>
+            <a href="#host" className="hover:text-white">Help Center</a>
+            <a href="#discover" className="hover:text-white">Blog</a>
+            <Link href="/discover" className="hover:text-white">Discover</Link>
           </div>
         </div>
       </footer>

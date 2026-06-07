@@ -7,7 +7,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
     <div className="space-y-3">
       {items.map((item, index) => (
         <div
-          key={item}
+          key={`${item}-${index}`}
           className="animate-fade-up flex items-center gap-3 rounded-2xl border border-plum-950/8 bg-white/72 px-4 py-3 shadow-soft"
           style={{ animationDelay: `${index * 100}ms` }}
         >
