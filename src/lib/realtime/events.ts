@@ -25,6 +25,10 @@ export const realtimeEventTypes = [
   "RSVP_QUESTION_UPDATED",
   "RSVP_QUESTION_DELETED",
   "RSVP_ANSWER_UPDATED",
+  "BROADCAST_CREATED",
+  "BROADCAST_DELETED",
+  "BROADCAST_UPDATED",
+  "BROADCAST_PINNED",
 ] as const;
 
 export type RealtimeEventType = (typeof realtimeEventTypes)[number];

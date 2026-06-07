@@ -9,6 +9,7 @@ import { ApproveNextWaitlistButton } from "@/components/dashboard/approve-next-w
 import { DatePollCard } from "@/components/dashboard/date-poll-card";
 import { DeleteEventButton } from "@/components/dashboard/delete-event-button";
 import { EventActivityFeed } from "@/components/dashboard/event-activity-feed";
+import { BroadcastsManagementCard } from "@/components/dashboard/broadcasts-management-card";
 import { GuestList } from "@/components/dashboard/guest-list";
 import { MemoriesManagementCard } from "@/components/dashboard/memories-management-card";
 import { QrCodeCard } from "@/components/qr/qr-code-card";
@@ -173,6 +174,17 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
           caption: true,
           uploaderName: true,
           uploadedBy: true,
+        },
+      },
+      broadcasts: {
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+        take: 3,
+        select: {
+          id: true,
+          title: true,
+          message: true,
+          audience: true,
+          pinned: true,
         },
       },
       infoBlocks: {
@@ -392,6 +404,8 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
           )}
 
           <DatePollCard eventId={event.id} poll={poll} />
+
+          <BroadcastsManagementCard eventId={event.id} broadcasts={event.broadcasts} />
 
           <section className="grid gap-4 lg:grid-cols-2">
             <article className="theme-panel rounded-[2rem] border p-5 sm:p-6">

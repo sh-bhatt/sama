@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { AddToCalendar } from "@/components/calendar/add-to-calendar";
+import { PublicBroadcasts } from "@/components/broadcasts/public-broadcasts";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { PublicGuestPreview } from "@/components/invite/public-guest-preview";
@@ -203,6 +204,18 @@ export default async function InvitePage({ params }: InvitePageProps) {
             caption: true,
           },
         },
+        broadcasts: {
+          where: { audience: "ALL" },
+          orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+          take: 5,
+          select: {
+            id: true,
+            title: true,
+            message: true,
+            pinned: true,
+            createdAt: true,
+          },
+        },
       },
     })
     .then((event) => ({ status: "ready" as const, event }))
@@ -310,6 +323,8 @@ export default async function InvitePage({ params }: InvitePageProps) {
               </p>
             </section>
           )}
+
+          <PublicBroadcasts broadcasts={event.broadcasts} />
 
           {event.infoBlocks.length > 0 && (
             <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">

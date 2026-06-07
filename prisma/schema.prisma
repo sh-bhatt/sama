@@ -52,6 +52,7 @@ model Event {
   memoryPhotos MemoryPhoto[]
   infoBlocks   EventInfoBlock[]
   rsvpQuestions RsvpQuestion[]
+  broadcasts EventBroadcast[]
 
   @@index([hostId])
   @@index([slug])
@@ -97,6 +98,22 @@ model EventInfoBlock {
 
   @@index([eventId])
   @@index([sortOrder])
+}
+
+model EventBroadcast {
+  id        String            @id @default(cuid())
+  eventId   String
+  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  audience  BroadcastAudience @default(ALL)
+  pinned    Boolean           @default(false)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([eventId])
+  @@index([audience])
+  @@index([createdAt])
 }
 
 model RsvpQuestion {
@@ -226,4 +243,13 @@ enum RsvpQuestionType {
   LONG_TEXT
   SINGLE_CHOICE
   MULTIPLE_CHOICE
+}
+
+enum BroadcastAudience {
+  ALL
+  GOING
+  MAYBE
+  APPROVED
+  PENDING
+  WAITLISTED
 }
