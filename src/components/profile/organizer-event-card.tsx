@@ -31,7 +31,11 @@ export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
       <div className={`film-grain relative min-h-48 bg-gradient-to-br ${getPosterVariant(event)} p-5`}>
         {event.coverImage && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.coverImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-75" />
+          <img
+            src={event.coverImage}
+            alt={`Cover image for ${event.title}`}
+            className="absolute inset-0 h-full w-full object-cover opacity-75"
+          />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/16 to-transparent" />
         <div className="relative flex flex-wrap gap-2">

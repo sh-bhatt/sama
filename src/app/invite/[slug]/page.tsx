@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isDatabaseConfigured } from "@/lib/auth/config";
 import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
+import { getEventTheme } from "@/lib/event-themes";
 import { demoEvent, recentActivity } from "@/lib/mock-data";
 import { getDisplayName, getOrganizerHref } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
@@ -27,28 +28,6 @@ type InvitePageProps = {
 };
 
 export const dynamic = "force-dynamic";
-
-function inviteTheme(theme: string) {
-  const normalized = theme.toLowerCase();
-
-  if (normalized.includes("after")) {
-    return "afterdark";
-  }
-
-  if (normalized.includes("campus")) {
-    return "campus";
-  }
-
-  if (normalized.includes("rooftop")) {
-    return "neon";
-  }
-
-  if (normalized.includes("cafe")) {
-    return "sunset";
-  }
-
-  return "mehfil";
-}
 
 function InviteNotFound() {
   return (
@@ -135,6 +114,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
         theme: true,
         city: true,
         category: true,
+        coverImage: true,
         visibility: true,
         capacity: true,
         requiresApproval: true,
@@ -308,7 +288,8 @@ export default async function InvitePage({ params }: InvitePageProps) {
             location={event.location}
             description={event.description || "A Sama invite from your people, for your people."}
             guests={guestInitials}
-            theme={inviteTheme(event.theme)}
+            theme={getEventTheme(event.theme).inviteTheme}
+            coverImage={event.coverImage}
           />
 
           <RealtimeRefresh
@@ -383,7 +364,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
                       <a
                         href={block.url}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noreferrer noopener"
                         className="focus-ring mt-3 inline-flex rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
                       >
                         Open link
@@ -479,7 +460,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
               <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-rose-neon to-lime-mute text-sm font-black text-zinc-950">
                 {event.host.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={event.host.imageUrl} alt="" className="h-full w-full object-cover" />
+                  <img src={event.host.imageUrl} alt={`${hostName} profile photo`} className="h-full w-full object-cover" />
                 ) : (
                   hostInitials
                 )}
@@ -512,7 +493,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
                 <a
                   href={event.host.instagramUrl}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noreferrer noopener"
                   className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
                 >
                   Instagram

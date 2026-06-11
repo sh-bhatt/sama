@@ -32,7 +32,15 @@ export default function SignUpPage() {
           <Link href="/" className="text-2xl font-black lowercase tracking-tight">
             Sama
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Link href="/discover" className="hidden text-sm font-black text-lime-mute sm:inline-flex">
+              Discover
+            </Link>
+            <Link href="/sign-in" className="focus-ring rounded-full bg-[color:var(--card)] px-3 py-2 text-sm font-black text-[color:var(--foreground)] sm:px-4">
+              Sign in
+            </Link>
+            <ThemeToggle />
+          </div>
         </header>
 
         <section className="grid flex-1 items-center gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">

@@ -7,19 +7,71 @@ import { HostChecklist } from "@/components/dashboard/host-checklist";
 import { MomentumCard } from "@/components/dashboard/momentum-card";
 import { PulseCard } from "@/components/dashboard/pulse-card";
 import { RecentRsvps } from "@/components/dashboard/recent-rsvps";
-import { EventCard } from "@/components/discovery/event-card";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
 import { ProfileCompletionCard } from "@/components/profile/profile-completion-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured } from "@/lib/auth/config";
-import { formatDateTimeLabel } from "@/lib/date";
-import { dashboardStats, demoEvent, hostEvents, recentActivity } from "@/lib/mock-data";
+import { formatDateTimeLabel, formatEventDateShort } from "@/lib/date";
+import { getEventTheme } from "@/lib/event-themes";
 import { prisma } from "@/lib/prisma";
 import { dashboardChannel } from "@/lib/realtime/events";
 
 export const dynamic = "force-dynamic";
+
+function warnQueryFailure(label: string, error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.warn(`${label} failed: ${message}`);
+}
+
+async function safeQuery<T>(label: string, query: Promise<T>, fallback: T) {
+  try {
+    return await query;
+  } catch (error) {
+    warnQueryFailure(label, error);
+    return fallback;
+  }
+}
+
+function startOfLocalDay(date = new Date()) {
+  const day = new Date(date);
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+function localDateKey(date: Date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function buildSevenDayMomentum(rsvps: { createdAt: Date }[]) {
+  const today = startOfLocalDay();
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() - (6 - index));
+
+    return {
+      key: localDateKey(date),
+      day: new Intl.DateTimeFormat("en-IN", { weekday: "short" }).format(date),
+      count: 0,
+    };
+  });
+
+  const countByDay = new Map(days.map((day) => [day.key, day.count]));
+  rsvps.forEach((rsvp) => {
+    const key = localDateKey(startOfLocalDay(rsvp.createdAt));
+    countByDay.set(key, (countByDay.get(key) ?? 0) + 1);
+  });
+
+  return days.map((day) => ({
+    day: day.day,
+    count: countByDay.get(day.key) ?? 0,
+  }));
+}
 
 export default async function DashboardPage() {
   if (!isClerkConfigured()) {
@@ -64,57 +116,173 @@ export default async function DashboardPage() {
     primaryEmail?.split("@")[0] ||
     "host";
   const dbUser = userResult.status === "ready" ? userResult.dbUser : null;
+  const todayStart = startOfLocalDay();
+  const sevenDaysStart = new Date(todayStart);
+  sevenDaysStart.setDate(todayStart.getDate() - 6);
   const dashboardData =
     dbUser
       ? await (async () => {
           try {
-            const [events, rsvpGroups, latestActivity] = await Promise.all([
-              prisma.event.findMany({
-                where: { hostId: dbUser.id },
-                orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
-                select: {
-                  id: true,
-                  title: true,
-                  slug: true,
-                  eventDate: true,
-                  eventTime: true,
-                  location: true,
-                  city: true,
-                  category: true,
-                  theme: true,
-                  visibility: true,
-                  capacity: true,
-                  requiresApproval: true,
-                  waitlistEnabled: true,
-                  datePolls: { select: { id: true }, take: 1 },
-                  _count: { select: { rsvps: true, memoryPhotos: true } },
-                },
-              }),
-              prisma.rSVP.groupBy({
-                by: ["eventId", "approvalStatus", "checkedIn"],
-                where: { event: { hostId: dbUser.id } },
-                _count: { _all: true },
-              }),
-              prisma.eventActivity.findMany({
-                where: { event: { hostId: dbUser.id } },
-                orderBy: { createdAt: "desc" },
-                take: 5,
-                select: {
-                  id: true,
-                  message: true,
-                  createdAt: true,
-                  event: { select: { title: true } },
-                },
-              }),
+            const events = await prisma.event.findMany({
+              where: { hostId: dbUser.id },
+              orderBy: [{ eventDate: "asc" }, { createdAt: "desc" }],
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                eventDate: true,
+                eventTime: true,
+                location: true,
+                city: true,
+                category: true,
+                theme: true,
+                coverImage: true,
+                visibility: true,
+                capacity: true,
+                requiresApproval: true,
+                waitlistEnabled: true,
+                datePolls: { select: { id: true }, take: 1 },
+                _count: { select: { rsvps: true, memoryPhotos: true, infoBlocks: true, interests: true } },
+              },
+            });
+            const eventIds = events.map((event) => event.id);
+
+            if (eventIds.length === 0) {
+              return {
+                status: "ready" as const,
+                partial: false,
+                events,
+                rsvpGroups: [],
+                latestActivity: [],
+                newRsvpsToday: 0,
+                interestedGuests: 0,
+                recentRsvps: [],
+                sevenDayRsvps: [],
+              };
+            }
+
+            const [
+              rsvpGroups,
+              latestActivity,
+              newRsvpsToday,
+              interestedGuests,
+              recentRsvps,
+              sevenDayRsvps,
+            ] = await Promise.all([
+              safeQuery(
+                "Dashboard RSVP groups load",
+                prisma.rSVP.groupBy({
+                  by: ["eventId", "approvalStatus", "checkedIn"],
+                  where: { eventId: { in: eventIds } },
+                  _count: { _all: true },
+                }),
+                [],
+              ),
+              safeQuery(
+                "Dashboard activity load",
+                prisma.eventActivity.findMany({
+                  where: { eventId: { in: eventIds } },
+                  orderBy: { createdAt: "desc" },
+                  take: 5,
+                  select: {
+                    id: true,
+                    message: true,
+                    createdAt: true,
+                    event: { select: { title: true } },
+                  },
+                }),
+                [],
+              ),
+              safeQuery(
+                "Dashboard today RSVP count load",
+                prisma.rSVP.count({
+                  where: {
+                    eventId: { in: eventIds },
+                    createdAt: { gte: todayStart },
+                  },
+                }),
+                0,
+              ),
+              safeQuery(
+                "Dashboard interest count load",
+                prisma.eventInterest.count({
+                  where: { eventId: { in: eventIds } },
+                }),
+                0,
+              ),
+              safeQuery(
+                "Dashboard recent RSVP load",
+                prisma.rSVP.findMany({
+                  where: { eventId: { in: eventIds } },
+                  orderBy: { createdAt: "desc" },
+                  take: 5,
+                  select: {
+                    id: true,
+                    name: true,
+                    status: true,
+                    createdAt: true,
+                    event: { select: { title: true } },
+                  },
+                }),
+                [],
+              ),
+              safeQuery(
+                "Dashboard momentum RSVP load",
+                prisma.rSVP.findMany({
+                  where: {
+                    eventId: { in: eventIds },
+                    createdAt: { gte: sevenDaysStart },
+                  },
+                  select: { createdAt: true },
+                }),
+                [],
+              ),
             ]);
 
-            return { status: "ready" as const, events, rsvpGroups, latestActivity };
+            return {
+              status: "ready" as const,
+              partial:
+                rsvpGroups.length === 0 &&
+                latestActivity.length === 0 &&
+                newRsvpsToday === 0 &&
+                interestedGuests === 0 &&
+                recentRsvps.length === 0 &&
+                sevenDayRsvps.length === 0 &&
+                events.some((event) => event._count.rsvps > 0 || event._count.interests > 0),
+              events,
+              rsvpGroups,
+              latestActivity,
+              newRsvpsToday,
+              interestedGuests,
+              recentRsvps,
+              sevenDayRsvps,
+            };
           } catch (error) {
-            console.warn("Dashboard data load failed:", error);
-            return { status: "database-error" as const, events: [], rsvpGroups: [], latestActivity: [] };
+            warnQueryFailure("Dashboard event load", error);
+            return {
+              status: "database-error" as const,
+              partial: false,
+              events: [],
+              rsvpGroups: [],
+              latestActivity: [],
+              newRsvpsToday: 0,
+              interestedGuests: 0,
+              recentRsvps: [],
+              sevenDayRsvps: [],
+            };
           }
         })()
-      : { status: "idle" as const, events: [], rsvpGroups: [], latestActivity: [] };
+      : {
+          status: "idle" as const,
+          partial: false,
+          events: [],
+          rsvpGroups: [],
+          latestActivity: [],
+          newRsvpsToday: 0,
+          interestedGuests: 0,
+          recentRsvps: [],
+          sevenDayRsvps: [],
+        };
   const realEvents = dashboardData.events;
   const rsvpCountFor = (eventId: string, predicate: (group: (typeof dashboardData.rsvpGroups)[number]) => boolean) =>
     dashboardData.rsvpGroups
@@ -135,6 +303,13 @@ export default async function DashboardPage() {
     message: activity.message,
     eventTitle: activity.event.title,
   }));
+  const recentRsvps = dashboardData.recentRsvps.map((rsvp) => ({
+    id: rsvp.id,
+    name: rsvp.name,
+    status: rsvp.status,
+    eventTitle: rsvp.event.title,
+  }));
+  const momentum = buildSevenDayMomentum(dashboardData.sevenDayRsvps);
   const realStats =
     userResult.status === "ready"
       ? [
@@ -152,7 +327,13 @@ export default async function DashboardPage() {
           { label: "pending", value: String(pendingApprovals), detail: "need host approval" },
           { label: "check-ins", value: String(checkedInGuests), detail: "guests at the room" },
         ]
-      : dashboardStats;
+      : [
+          { label: "live events", value: "0", detail: "saved invites" },
+          { label: "total RSVPs", value: "0", detail: "all guest replies" },
+          { label: "approved", value: "0", detail: "cleared guests" },
+          { label: "pending", value: "0", detail: "need host approval" },
+          { label: "check-ins", value: "0", detail: "guests at the room" },
+        ];
   const headerList = await headers();
   const origin =
     headerList.get("x-forwarded-host") || headerList.get("host")
@@ -167,9 +348,44 @@ export default async function DashboardPage() {
       userResult.dbUser &&
       (!userResult.dbUser.username || !userResult.dbUser.bio),
   );
+  const now = new Date();
+  const nextEvent = realEvents.find((event) => event.eventDate >= startOfLocalDay(now)) ?? realEvents[0];
+  const eventNeedingShare = realEvents.find((event) => event._count.rsvps === 0);
+  const eventNeedingInfo = realEvents.find((event) => event._count.infoBlocks === 0);
+  const eventWithin24Hours = realEvents.find((event) => {
+    const eventDay = new Date(event.eventDate);
+    const diff = eventDay.getTime() - now.getTime();
+
+    return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
+  });
+  const hostMoves = [
+    ...(realEvents.length === 0
+      ? [{ label: "Create your first invite", href: "/dashboard/events/new", active: true }]
+      : []),
+    ...(eventNeedingShare
+      ? [{ label: `Share invite link for ${eventNeedingShare.title}`, href: `/invite/${eventNeedingShare.slug}`, active: true }]
+      : []),
+    ...(pendingApprovals > 0 && nextEvent
+      ? [{ label: `Review ${pendingApprovals} pending approvals`, href: `/dashboard/events/${nextEvent.id}` }]
+      : []),
+    ...(eventWithin24Hours
+      ? [{ label: `Prepare check-in for ${eventWithin24Hours.title}`, href: `/dashboard/events/${eventWithin24Hours.id}/check-in` }]
+      : []),
+    ...(profileIncomplete ? [{ label: "Complete organizer profile", href: "/dashboard/profile" }] : []),
+    ...(eventNeedingInfo
+      ? [{ label: `Add venue note for ${eventNeedingInfo.title}`, href: `/dashboard/events/${eventNeedingInfo.id}/info-blocks` }]
+      : []),
+  ].slice(0, 4);
+  const featuredEvent = nextEvent;
+  const featuredGuests =
+    recentRsvps.length > 0
+      ? recentRsvps.slice(0, 4).map((rsvp) => rsvp.name.slice(0, 2).toUpperCase())
+      : ["GO", "RS", "VP"];
+  const hostInitials = displayName.slice(0, 2).toUpperCase();
+  const hostImageUrl = dbUser?.imageUrl ?? null;
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
+    <main className="dark-stage min-h-screen text-foreground">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="min-w-0 text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
@@ -230,7 +446,7 @@ export default async function DashboardPage() {
             </p>
             <p className="theme-muted mt-2 font-semibold leading-7">
               Add DATABASE_URL for Neon, then run Prisma generate and db push.
-              The dashboard stays static until Phase 2B connects real events.
+              The dashboard will load your real host signals once the database is connected.
             </p>
           </section>
         )}
@@ -243,6 +459,17 @@ export default async function DashboardPage() {
             <p className="theme-muted mt-2 font-semibold leading-7">
               Clerk auth is active, but Sama could not upsert the local user.
               Check DATABASE_URL and run Prisma setup before connecting real data.
+            </p>
+          </section>
+        )}
+
+        {dashboardData.status === "ready" && dashboardData.partial && (
+          <section className="theme-panel rounded-[1.5rem] border p-5">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-saffron-200">
+              live signals partially unavailable
+            </p>
+            <p className="theme-muted mt-2 font-semibold leading-7">
+              Sama loaded your events, but Neon did not return every metric in time. Refresh in a moment for the latest pulse.
             </p>
           </section>
         )}
@@ -290,8 +517,29 @@ export default async function DashboardPage() {
                         className="theme-panel tilt-card min-w-0 overflow-hidden rounded-[1.75rem] border"
                       >
                         <div className="film-grain relative min-h-44 bg-gradient-to-br from-fuchsia-950 via-rose-600 to-lime-mute p-5">
-                          <span className="rounded-full bg-ivory px-3 py-1 text-xs font-black text-zinc-950">
+                          {event.coverImage && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={event.coverImage}
+                              alt={`Cover image for ${event.title}`}
+                              className="absolute inset-0 h-full w-full object-cover"
+                            />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/12 to-black/12" />
+                          <span className="relative z-10 rounded-full bg-ivory px-3 py-1 text-xs font-black text-zinc-950">
                             {event.category || event.theme}
+                          </span>
+                          <span className="absolute right-5 top-5 z-10 grid size-9 place-items-center overflow-hidden rounded-full border border-white/20 bg-ivory text-xs font-black text-zinc-950">
+                            {hostImageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={hostImageUrl}
+                                alt={`${displayName} profile photo`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              hostInitials
+                            )}
                           </span>
                           <h3 className="absolute bottom-5 left-5 right-5 text-3xl font-black lowercase leading-none text-white">
                             {event.title}
@@ -307,8 +555,8 @@ export default async function DashboardPage() {
                           </p>
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-lime-mute">
-                            {event._count.rsvps} RSVPs
-                          </span>
+                              {event._count.rsvps} RSVPs
+                            </span>
                             {eventPendingApprovals > 0 && (
                               <span className="rounded-full bg-saffron-200 px-3 py-1.5 text-xs font-black text-zinc-950">
                                 {eventPendingApprovals} pending
@@ -341,12 +589,16 @@ export default async function DashboardPage() {
                   })}
                 </div>
               ) : (
-                <div className="min-w-0 max-w-full overflow-hidden">
-                  <div className="scroll-row flex max-w-full gap-4 overflow-x-auto px-1 pb-8 pt-3">
-                    {hostEvents.map((event) => (
-                      <EventCard key={event.title} event={event} size="dashboard" />
-                    ))}
-                  </div>
+                <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                    dashboard unavailable
+                  </p>
+                  <h3 className="theme-heading mt-3 text-4xl font-black lowercase">
+                    connect the database to load events
+                  </h3>
+                  <p className="theme-muted mt-3 max-w-xl font-semibold leading-7">
+                    Once Neon is configured, your real hosted events will appear here.
+                  </p>
                 </div>
               )}
             </section>
@@ -359,55 +611,65 @@ export default async function DashboardPage() {
                 <h2 className="theme-heading mt-2 text-4xl font-black lowercase">live room signals</h2>
               </div>
               <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-4">
-                <PulseCard label="new RSVPs today" value="18" accent="lime" />
-                <PulseCard label="WhatsApp shares" value="7" accent="rose" />
+                <PulseCard label="new RSVPs today" value={String(dashboardData.newRsvpsToday)} accent="lime" />
+                <PulseCard label="interested guests" value={String(dashboardData.interestedGuests)} accent="rose" />
                 <PulseCard label="pending approvals" value={String(pendingApprovals)} accent="blue" />
                 <PulseCard label="total RSVPs" value={String(totalRsvps)} accent="saffron" />
               </div>
             </section>
 
             <section className="grid min-w-0 gap-4 lg:grid-cols-2">
-              <MomentumCard />
+              <MomentumCard momentum={momentum} />
               <div className="grid min-w-0 gap-4">
-                <HostChecklist />
-                <RecentRsvps />
+                <HostChecklist moves={hostMoves} />
+                <RecentRsvps rsvps={recentRsvps} />
               </div>
             </section>
 
-            <section className="min-w-0">
-              <div className="mb-4">
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
-                  featured invite preview
-                </p>
-                <h2 className="theme-heading mt-2 text-4xl font-black lowercase">
-                  tonight&apos;s room card
-                </h2>
-              </div>
-              <AnimatedInviteCard
-                title={demoEvent.title}
-                date={demoEvent.date}
-                time={demoEvent.time}
-                host={demoEvent.host}
-                location={demoEvent.location}
-                description="A compact preview of the invite your guests will open and share."
-                guests={demoEvent.guests.slice(0, 4).map((guest) => guest.name.slice(0, 2).toUpperCase())}
-                theme="afterdark"
-                compact
-              />
-            </section>
+            {featuredEvent && (
+              <section className="min-w-0">
+                <div className="mb-4">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                    featured invite preview
+                  </p>
+                  <h2 className="theme-heading mt-2 text-4xl font-black lowercase">
+                    tonight&apos;s room card
+                  </h2>
+                </div>
+                <AnimatedInviteCard
+                  title={featuredEvent.title}
+                  date={formatEventDateShort(featuredEvent.eventDate)}
+                  time={featuredEvent.eventTime}
+                  host={displayName}
+                  location={featuredEvent.location}
+                  description="A compact preview of the invite your guests will open and share."
+                  guests={featuredGuests}
+                  theme={getEventTheme(featuredEvent.theme).inviteTheme}
+                  coverImage={featuredEvent.coverImage}
+                  compact
+                />
+              </section>
+            )}
           </div>
 
-          <aside className="min-w-0 space-y-4 xl:sticky xl:top-6 xl:self-start">
+          <aside className="scrollbar-none min-w-0 space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:pb-2">
             {profileIncomplete && <ProfileCompletionCard />}
 
             <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">quick actions</p>
               <div className="mt-4 grid gap-3">
-                {["Copy invite link", "Send WhatsApp nudge", "Open guest list"].map((action) => (
-                  <button key={action} type="button" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
-                    {action}
-                  </button>
-                ))}
+                <Link href="/dashboard/events/new" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
+                  Create invite
+                </Link>
+                <Link href="/discover" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
+                  View public discover
+                </Link>
+                <Link href="/dashboard/profile" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
+                  Edit organizer profile
+                </Link>
+                <Link href="/dashboard/guests" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
+                  Open guest list
+                </Link>
               </div>
             </section>
             <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
@@ -419,20 +681,38 @@ export default async function DashboardPage() {
                         {item.message} <span className="text-zinc-500">- {item.eventTitle}</span>
                       </p>
                     ))
-                  : recentActivity.map((item, index) => (
-                      <p key={`${item}-${index}`} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
-                        {item}
-                      </p>
-                    ))}
+                  : (
+                      <div className="rounded-2xl bg-black/35 px-4 py-5">
+                        <h3 className="theme-heading text-xl font-black lowercase">no activity yet</h3>
+                        <p className="theme-muted mt-2 text-sm font-semibold leading-6">
+                          RSVP updates and host actions will appear here when they are recorded.
+                        </p>
+                      </div>
+                    )}
               </div>
-            </section>
-            <section className="min-w-0 rounded-[2rem] border border-white/10 bg-lime-mute p-5 text-zinc-950">
-              <p className="text-sm font-black uppercase tracking-[0.18em]">invite links</p>
-              <h3 className="mt-3 text-2xl font-black lowercase">one link, whole room.</h3>
-              <p className="mt-2 text-sm font-bold">Share on WhatsApp, stories, or the group chat.</p>
             </section>
           </aside>
         </div>
+
+        <section className="min-w-0 rounded-[2rem] border border-white/10 bg-lime-mute p-6 text-zinc-950 shadow-[0_24px_80px_rgba(198,255,69,0.16)] sm:p-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-black uppercase tracking-[0.18em]">invite links</p>
+              <h3 className="mt-3 text-4xl font-black lowercase leading-none sm:text-5xl">
+                one link, whole room.
+              </h3>
+              <p className="mt-3 max-w-2xl text-sm font-bold sm:text-base">
+                Share on WhatsApp, stories, or the group chat. Every guest opens the same live room.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/invite-tools"
+              className="focus-ring w-fit rounded-full bg-zinc-950 px-5 py-3 text-sm font-black text-lime-mute transition hover:-translate-y-0.5"
+            >
+              Open invite tools
+            </Link>
+          </div>
+        </section>
       </section>
     </main>
   );

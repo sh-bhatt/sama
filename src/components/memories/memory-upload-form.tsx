@@ -58,7 +58,7 @@ export function MemoryUploadForm({
 
       <form ref={formRef} action={formAction} className="mt-5 space-y-4">
         <input type="hidden" name="slug" value={slug} />
-        <label htmlFor="memory-photo" className="sr-only">
+        <label htmlFor="memory-photo" className="theme-muted block text-sm font-black">
           Memory photo
         </label>
         <input
@@ -70,7 +70,7 @@ export function MemoryUploadForm({
           required
           className="focus-ring block w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 text-sm font-bold text-[color:var(--foreground)] file:mr-4 file:rounded-full file:border-0 file:bg-lime-mute file:px-4 file:py-2 file:font-black file:text-zinc-950 disabled:opacity-60"
         />
-        <label htmlFor="memory-uploader-name" className="sr-only">
+        <label htmlFor="memory-uploader-name" className="theme-muted block text-sm font-black">
           Your name
         </label>
         <input
@@ -80,7 +80,7 @@ export function MemoryUploadForm({
           placeholder="Your name"
           className="focus-ring w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 font-bold text-[color:var(--foreground)] placeholder:text-[color:var(--muted)]"
         />
-        <label htmlFor="memory-caption" className="sr-only">
+        <label htmlFor="memory-caption" className="theme-muted block text-sm font-black">
           Memory caption
         </label>
         <textarea

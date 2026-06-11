@@ -86,7 +86,7 @@ function DatabaseError() {
 
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
   const filters = parseDiscoverFilters(await searchParams);
-  const userId = isClerkConfigured() ? (await auth()).userId : null;
+  const userIdPromise = isClerkConfigured() ? auth().then((session) => session.userId) : Promise.resolve(null);
 
   if (!isDatabaseConfigured()) {
     return <SetupMessage />;
@@ -119,7 +119,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     .findMany({
       where,
       orderBy: { eventDate: "asc" },
-      take: 36,
+      take: 24,
       select: {
         id: true,
         title: true,
@@ -135,12 +135,18 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
         capacity: true,
         requiresApproval: true,
         waitlistEnabled: true,
-        host: { select: { name: true, username: true, publicProfile: true } },
-        rsvps: {
-          where: { approvalStatus: "APPROVED" },
-          select: { status: true, approvalStatus: true },
+        host: { select: { name: true, imageUrl: true, username: true, publicProfile: true } },
+        _count: {
+          select: {
+            interests: true,
+            rsvps: {
+              where: {
+                status: "GOING",
+                approvalStatus: "APPROVED",
+              },
+            },
+          },
         },
-        _count: { select: { interests: true, rsvps: true } },
       },
     })
     .then((events) => ({ status: "ready" as const, events }))
@@ -153,6 +159,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     return <DatabaseError />;
   }
 
+  const userId = await userIdPromise;
   const events = eventResult.events;
   const trending = [...events].sort((a, b) => getTrendingScore(b) - getTrendingScore(a)).slice(0, 6);
   const thisWeek = events.filter((event) => event.eventDate <= getNextWeek()).slice(0, 8);
@@ -176,12 +183,20 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 <UserButton />
               </div>
             ) : (
-              <Link
-                href="/sign-in"
-                className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
-              >
-                Sign in
-              </Link>
+              <>
+                <Link
+                  href="/dashboard/events/new"
+                  className="focus-ring rounded-full bg-lime-mute px-3 py-2 text-sm font-black text-zinc-950 sm:px-4"
+                >
+                  Host
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className="focus-ring hidden rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)] sm:inline-flex"
+                >
+                  Sign in
+                </Link>
+              </>
             )}
             <ThemeToggle />
           </div>
@@ -207,7 +222,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
       {events.length ? (
         <>
           <DiscoverSection title="trending this week" eyebrow="guest energy" events={trending} />
-          <div className="bg-ivory py-4 dark:bg-ivory">
+          <div className="theme-editorial-band py-4">
             <DiscoverSection title="upcoming near you" eyebrow={filters.city || "india"} events={thisWeek.length ? thisWeek : upcoming} tone="light" />
           </div>
           <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

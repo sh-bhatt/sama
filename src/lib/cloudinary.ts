@@ -51,6 +51,76 @@ export async function uploadMemoryImage({
   });
 }
 
+export async function uploadProfileImage({
+  buffer,
+  userId,
+}: {
+  buffer: Buffer;
+  userId: string;
+}) {
+  if (!configureCloudinary()) {
+    throw new Error("Cloudinary is not configured yet.");
+  }
+
+  return new Promise<Pick<UploadApiResponse, "secure_url" | "public_id">>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: `sama/profiles/${userId}`,
+        resource_type: "image",
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error || new Error("Cloudinary upload failed."));
+          return;
+        }
+
+        resolve({
+          secure_url: result.secure_url,
+          public_id: result.public_id,
+        });
+      },
+    );
+
+    stream.end(buffer);
+  });
+}
+
+export async function uploadEventCoverImage({
+  buffer,
+  eventId,
+}: {
+  buffer: Buffer;
+  eventId: string;
+}) {
+  if (!configureCloudinary()) {
+    throw new Error("Cloudinary is not configured yet.");
+  }
+
+  return new Promise<Pick<UploadApiResponse, "secure_url" | "public_id">>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: `sama/events/${eventId}/cover`,
+        resource_type: "image",
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error || new Error("Cloudinary upload failed."));
+          return;
+        }
+
+        resolve({
+          secure_url: result.secure_url,
+          public_id: result.public_id,
+        });
+      },
+    );
+
+    stream.end(buffer);
+  });
+}
+
 export async function deleteMemoryImage(publicId: string | null | undefined) {
   if (!publicId || !configureCloudinary()) {
     return;

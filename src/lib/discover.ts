@@ -39,6 +39,7 @@ export type PublicDiscoveryEvent = {
   waitlistEnabled: boolean;
   host: {
     name: string | null;
+    imageUrl?: string | null;
     username?: string | null;
     publicProfile?: boolean;
   };
@@ -62,6 +63,10 @@ export function getApprovedGoingCount(event: PublicDiscoveryEvent) {
 
 export function getHostLabel(event: PublicDiscoveryEvent) {
   return event.host.name || event.host.username || "Sama host";
+}
+
+export function getHostInitials(event: PublicDiscoveryEvent) {
+  return getHostLabel(event).slice(0, 2).toUpperCase();
 }
 
 export function getPosterVariant(event: Pick<PublicDiscoveryEvent, "category" | "theme">) {

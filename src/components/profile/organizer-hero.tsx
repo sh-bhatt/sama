@@ -29,7 +29,7 @@ export function OrganizerHero({
         <div className="grid size-28 place-items-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-rose-neon to-lime-mute text-3xl font-black text-zinc-950">
           {user.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+            <img src={user.imageUrl} alt={`${displayName} profile photo`} className="h-full w-full object-cover" />
           ) : (
             initials
           )}
@@ -58,12 +58,12 @@ export function OrganizerHero({
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             {user.instagramUrl && (
-              <a href={user.instagramUrl} target="_blank" rel="noreferrer" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+              <a href={user.instagramUrl} target="_blank" rel="noreferrer noopener" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
                 Instagram
               </a>
             )}
             {user.websiteUrl && (
-              <a href={user.websiteUrl} target="_blank" rel="noreferrer" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+              <a href={user.websiteUrl} target="_blank" rel="noreferrer noopener" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
                 Website
               </a>
             )}

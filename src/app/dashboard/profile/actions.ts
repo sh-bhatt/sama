@@ -3,14 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { uploadProfileImage } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { getOrganizerHref } from "@/lib/profile";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel } from "@/lib/realtime/events";
-import { parseProfileFormData } from "@/lib/validations/profile";
+import { parseProfileFormData, validateProfileImage } from "@/lib/validations/profile";
 
 type ProfileActionResult =
-  | { ok: true; message: string; href: string | null }
+  | { ok: true; message: string; href: string | null; imageUrl: string | null }
   | { ok: false; error: string };
 
 export async function updateProfileAction(formData: FormData): Promise<ProfileActionResult> {
@@ -33,6 +34,12 @@ export async function updateProfileAction(formData: FormData): Promise<ProfileAc
   }
 
   const input = parsed.data;
+  const imageFile = formData.get("image");
+  const imageError = validateProfileImage(imageFile instanceof File ? imageFile : null);
+
+  if (imageError) {
+    return { ok: false, error: imageError };
+  }
 
   if (input.username) {
     const existing = await prisma.user.findFirst({
@@ -48,6 +55,26 @@ export async function updateProfileAction(formData: FormData): Promise<ProfileAc
     }
   }
 
+  let imageUrl: string | undefined;
+
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      const buffer = Buffer.from(await imageFile.arrayBuffer());
+      const uploaded = await uploadProfileImage({
+        buffer,
+        userId: currentUser.dbUser.id,
+      });
+      imageUrl = uploaded.secure_url;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Profile photo upload failed: ${message}`);
+      return {
+        ok: false,
+        error: "Profile photo uploads need Cloudinary setup. Add the Cloudinary env vars and try again.",
+      };
+    }
+  }
+
   const updated = await prisma.user.update({
     where: { id: currentUser.dbUser.id },
     data: {
@@ -58,11 +85,13 @@ export async function updateProfileAction(formData: FormData): Promise<ProfileAc
       instagramUrl: input.instagramUrl,
       websiteUrl: input.websiteUrl,
       publicProfile: input.publicProfile,
+      ...(imageUrl ? { imageUrl } : {}),
     },
     select: {
       id: true,
       username: true,
       name: true,
+      imageUrl: true,
       publicProfile: true,
     },
   });
@@ -90,5 +119,6 @@ export async function updateProfileAction(formData: FormData): Promise<ProfileAc
     ok: true,
     message: "Profile saved.",
     href: getOrganizerHref(updated),
+    imageUrl: updated.imageUrl,
   };
 }

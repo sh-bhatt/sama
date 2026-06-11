@@ -32,7 +32,15 @@ export default function SignInPage() {
           <Link href="/" className="text-2xl font-black lowercase tracking-tight">
             Sama
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Link href="/discover" className="hidden text-sm font-black text-lime-mute sm:inline-flex">
+              Discover
+            </Link>
+            <Link href="/dashboard/events/new" className="focus-ring rounded-full bg-lime-mute px-3 py-2 text-sm font-black text-zinc-950 sm:px-4">
+              Host
+            </Link>
+            <ThemeToggle />
+          </div>
         </header>
 
         <section className="grid flex-1 items-center gap-8 py-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,440px)]">

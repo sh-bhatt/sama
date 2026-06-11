@@ -1,14 +1,18 @@
-const momentum = [
-  { day: "Mon", value: 42, color: "bg-lime-mute" },
-  { day: "Tue", value: 58, color: "bg-rose-neon" },
-  { day: "Wed", value: 46, color: "bg-electric" },
-  { day: "Thu", value: 64, color: "bg-lime-mute" },
-  { day: "Fri", value: 78, color: "bg-rose-neon" },
-  { day: "Sat", value: 92, color: "bg-saffron-200" },
-  { day: "Sun", value: 54, color: "bg-electric" },
-];
+type MomentumItem = {
+  day: string;
+  count: number;
+};
 
-export function MomentumCard() {
+type MomentumCardProps = {
+  momentum: MomentumItem[];
+};
+
+const barColors = ["bg-lime-mute", "bg-rose-neon", "bg-electric", "bg-saffron-200"];
+
+export function MomentumCard({ momentum }: MomentumCardProps) {
+  const maxCount = Math.max(...momentum.map((item) => item.count), 0);
+  const hasMomentum = maxCount > 0;
+
   return (
     <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
       <div className="flex items-start justify-between gap-4">
@@ -22,19 +26,30 @@ export function MomentumCard() {
           7 days
         </span>
       </div>
-      <div className="mt-6 flex h-44 items-end gap-2 sm:gap-3">
-        {momentum.map((item) => (
-          <div key={item.day} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-            <div className="flex h-32 w-full items-end rounded-full bg-black/35 p-1">
-              <div
-                className={`w-full rounded-full ${item.color} shadow-[0_0_24px_rgba(198,255,69,0.18)]`}
-                style={{ height: `${item.value}%` }}
-              />
+
+      {hasMomentum ? (
+        <div className="mt-6 flex h-44 items-end gap-2 sm:gap-3">
+          {momentum.map((item, index) => (
+            <div key={item.day} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+              <div className="flex h-32 w-full items-end rounded-full bg-black/35 p-1">
+                <div
+                  className={`w-full rounded-full ${barColors[index % barColors.length]} shadow-[0_0_24px_rgba(198,255,69,0.18)]`}
+                  style={{ height: `${Math.max(12, (item.count / maxCount) * 100)}%` }}
+                />
+              </div>
+              <span className="theme-muted text-xs font-black">{item.day}</span>
+              <span className="text-xs font-black text-lime-mute">{item.count}</span>
             </div>
-            <span className="theme-muted text-xs font-black">{item.day}</span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-[1.5rem] bg-black/35 px-4 py-8">
+          <h4 className="theme-heading text-2xl font-black lowercase">no RSVP movement yet</h4>
+          <p className="theme-muted mt-2 text-sm font-semibold leading-6">
+            Share your invite to start the signal.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

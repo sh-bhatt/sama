@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { uploadEventCoverImage } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
@@ -11,6 +12,27 @@ import { eventDateStringToDate, parseEventFormData } from "@/lib/validations/eve
 
 function redirectWithError(message: string): never {
   redirect(`/dashboard/events/new?error=${encodeURIComponent(message)}`);
+}
+
+const allowedCoverImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxCoverImageSize = 5 * 1024 * 1024;
+
+function getCoverImageFile(formData: FormData) {
+  const value = formData.get("coverImage");
+
+  if (!(value instanceof File) || value.size === 0) {
+    return null;
+  }
+
+  if (!allowedCoverImageTypes.has(value.type)) {
+    redirectWithError("Use a JPG, PNG, or WebP cover image.");
+  }
+
+  if (value.size > maxCoverImageSize) {
+    redirectWithError("Cover image must be 5MB or smaller.");
+  }
+
+  return value;
 }
 
 export async function createEventAction(formData: FormData) {
@@ -34,6 +56,24 @@ export async function createEventAction(formData: FormData) {
 
   const input = parsed.data;
   const slug = await generateUniqueEventSlug(input.title);
+  const coverImageFile = getCoverImageFile(formData);
+  let coverImage: string | null = null;
+
+  if (coverImageFile) {
+    try {
+      const buffer = Buffer.from(await coverImageFile.arrayBuffer());
+      const uploaded = await uploadEventCoverImage({
+        buffer,
+        eventId: slug,
+      });
+
+      coverImage = uploaded.secure_url;
+    } catch (error) {
+      console.warn("Event cover upload failed:", error);
+      redirectWithError("Could not upload the event cover image. Check Cloudinary setup and try again.");
+    }
+  }
+
   const event = await prisma.event.create({
     data: {
       hostId: currentUser.dbUser.id,
@@ -44,9 +84,10 @@ export async function createEventAction(formData: FormData) {
       eventTime: input.eventTime,
       location: input.location,
       visibility: input.visibility,
-      theme: input.theme || "Mehfil",
+      theme: input.theme,
       category: input.category,
       city: input.city,
+      coverImage,
       capacity: input.capacity,
       allowPlusOne: input.allowPlusOne,
       requiresApproval: input.requiresApproval,
@@ -55,6 +96,7 @@ export async function createEventAction(formData: FormData) {
       paymentNote: input.paymentNote,
     },
   });
+
   await publishEventUpdate(
     [eventChannel(event.id), inviteChannel(event.slug), dashboardChannel(event.hostId)],
     {

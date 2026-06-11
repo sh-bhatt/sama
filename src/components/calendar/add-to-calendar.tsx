@@ -13,7 +13,7 @@ export function AddToCalendar({ googleUrl, icsUrl }: AddToCalendarProps) {
         <a
           href={googleUrl}
           target="_blank"
-          rel="noreferrer"
+          rel="noreferrer noopener"
           className="focus-ring rounded-full bg-[color:var(--accent)] px-4 py-3 text-center text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5"
         >
           Google Calendar

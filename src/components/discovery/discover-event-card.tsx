@@ -3,6 +3,7 @@ import { InterestButton } from "@/components/discovery/interest-button";
 import { formatDateTimeLabel } from "@/lib/date";
 import {
   getApprovedGoingCount,
+  getHostInitials,
   getHostLabel,
   getPosterVariant,
   type PublicDiscoveryEvent,
@@ -20,7 +21,35 @@ export function DiscoverEventCard({
   const interestedCount = event._count.interests;
   const goingCount = getApprovedGoingCount(event);
   const hostLabel = getHostLabel(event);
+  const hostInitials = getHostInitials(event);
   const organizerHref = getOrganizerHref(event.host);
+  const hostAvatar = (
+    <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-white/20 bg-ivory text-xs font-black text-zinc-950 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
+      {event.host.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={event.host.imageUrl}
+          alt={`${hostLabel} profile photo`}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        hostInitials
+      )}
+    </span>
+  );
+  const hostLinkContent = (
+    <>
+      {hostAvatar}
+      <span className="min-w-0">
+        <span className="block text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
+          hosted by
+        </span>
+        <span className="block truncate text-sm font-black text-lime-200">
+          {hostLabel}
+        </span>
+      </span>
+    </>
+  );
 
   return (
     <article
@@ -29,7 +58,7 @@ export function DiscoverEventCard({
         wide ? "w-[min(86vw,24rem)]" : "w-[min(82vw,20rem)]",
       )}
     >
-      <Link href={`/invite/${event.slug}`} className="block">
+      <Link href={`/invite/${event.slug}`} className="block" aria-label={`Open invite for ${event.title}`}>
         <div
           className={cn(
             "film-grain poster-mesh relative h-60 overflow-hidden bg-gradient-to-br",
@@ -40,7 +69,7 @@ export function DiscoverEventCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={event.coverImage}
-              alt=""
+              alt={`Cover image for ${event.title}`}
               className="absolute inset-0 h-full w-full object-cover opacity-78"
             />
           )}
@@ -78,16 +107,18 @@ export function DiscoverEventCard({
         <p className="text-sm text-zinc-400">
           {event.city || "India"} - {event.location}
         </p>
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
-          hosted by{" "}
-          {organizerHref ? (
-            <Link href={organizerHref} className="text-lime-200 transition hover:text-lime-mute">
-              {hostLabel}
-            </Link>
-          ) : (
-            <span className="text-lime-200">{hostLabel}</span>
-          )}
-        </p>
+        {organizerHref ? (
+          <Link
+            href={organizerHref}
+            className="focus-ring flex min-w-0 items-center gap-2 rounded-2xl bg-white/6 px-3 py-2 transition hover:bg-white/10"
+          >
+            {hostLinkContent}
+          </Link>
+        ) : (
+          <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-white/6 px-3 py-2">
+            {hostLinkContent}
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-lime-200">
             {goingCount}

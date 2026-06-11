@@ -46,17 +46,15 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
-        <Script id="sama-theme-script" strategy="beforeInteractive">
-          {themeScript}
-        </Script>
-      </head>
       <body className="min-h-full flex flex-col">
         {isClerkConfigured() ? (
           <ClerkProvider>{content}</ClerkProvider>
         ) : (
           content
         )}
+        <Script id="sama-theme-script" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
       </body>
     </html>
   );

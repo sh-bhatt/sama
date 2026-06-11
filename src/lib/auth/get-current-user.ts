@@ -50,7 +50,6 @@ export async function getCurrentUser(): Promise<CurrentUserResult> {
       where: { clerkId: userId },
       update: {
         email: primaryEmail,
-        imageUrl: clerkUser.imageUrl,
       },
       create: {
         clerkId: userId,

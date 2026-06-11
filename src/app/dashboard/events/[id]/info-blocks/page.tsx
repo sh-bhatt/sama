@@ -110,7 +110,7 @@ export default async function InfoBlocksPage({ params, searchParams }: InfoBlock
                       <h2 className="theme-heading mt-2 text-2xl font-black">{block.title}</h2>
                       <p className="theme-muted mt-2 font-semibold leading-7">{block.content}</p>
                       {block.url && (
-                        <a href={block.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-sm font-black text-rose-neon">
+                        <a href={block.url} target="_blank" rel="noreferrer noopener" className="mt-3 inline-flex text-sm font-black text-rose-neon">
                           Open link
                         </a>
                       )}

@@ -50,7 +50,7 @@ export function CopyBroadcastMessageButton({
       <a
         href={whatsappUrl}
         target="_blank"
-        rel="noreferrer"
+        rel="noreferrer noopener"
         className="focus-ring rounded-full bg-lime-mute px-4 py-2 text-sm font-black text-zinc-950 transition hover:-translate-y-0.5"
       >
         Open WhatsApp

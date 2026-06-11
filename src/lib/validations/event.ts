@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { eventThemeKeys } from "@/lib/event-themes";
 
 const optionalText = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
@@ -30,7 +31,10 @@ export const eventInputSchema = z.object({
   location: z.string().trim().min(1, "Location is required."),
   city: optionalText,
   category: optionalText,
-  theme: optionalText,
+  theme: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() !== "" ? value : undefined),
+    z.enum(eventThemeKeys).default("mehfil"),
+  ),
   visibility: z.enum(["public", "private"]).default("public"),
   capacity: optionalPositiveInteger,
   allowPlusOne: z.preprocess((value) => value === "on" || value === "true", z.boolean()),

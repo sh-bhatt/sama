@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { updateProfileAction } from "@/app/dashboard/profile/actions";
@@ -12,6 +12,7 @@ type ProfileFormUser = {
   location: string | null;
   instagramUrl: string | null;
   websiteUrl: string | null;
+  imageUrl: string | null;
   publicProfile: boolean;
 };
 
@@ -23,9 +24,20 @@ export function ProfileForm({ user }: { user: ProfileFormUser }) {
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [imagePreview, setImagePreview] = useState(user.imageUrl || "");
   const [profileHref, setProfileHref] = useState<string | null>(
     user.publicProfile && user.username ? `/u/${user.username}` : null,
   );
+  const displayName = user.name || user.username || "Sama host";
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    return () => {
+      if (imagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   function submitProfile(formData: FormData) {
     setMessage("");
@@ -41,7 +53,24 @@ export function ProfileForm({ user }: { user: ProfileFormUser }) {
 
       setMessage(result.message);
       setProfileHref(result.href);
+      setImagePreview(result.imageUrl || "");
       router.refresh();
+    });
+  }
+
+  function previewImage(file: File | undefined) {
+    if (!file) {
+      setImagePreview(user.imageUrl || "");
+      return;
+    }
+
+    const nextPreview = URL.createObjectURL(file);
+    setImagePreview((current) => {
+      if (current.startsWith("blob:")) {
+        URL.revokeObjectURL(current);
+      }
+
+      return nextPreview;
     });
   }
 
@@ -51,6 +80,38 @@ export function ProfileForm({ user }: { user: ProfileFormUser }) {
         organizer profile
       </p>
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <span className="theme-muted text-sm font-black">Profile photo</span>
+          <div className="mt-3 flex flex-col gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] p-4 sm:flex-row sm:items-center">
+            <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-rose-neon to-lime-mute text-xl font-black text-zinc-950">
+              {imagePreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={imagePreview} alt={`${displayName} profile preview`} className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor="profile-image"
+                className="focus-ring inline-flex cursor-pointer rounded-2xl bg-[color:var(--foreground)] px-4 py-3 text-sm font-black text-[color:var(--background)]"
+              >
+                {user.imageUrl ? "Change photo" : "Upload profile photo"}
+              </label>
+              <input
+                id="profile-image"
+                name="image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(event) => previewImage(event.target.files?.[0])}
+              />
+              <p className="theme-muted mt-3 text-sm font-semibold">
+                Square photos work best. JPG, PNG, or WebP under 3MB.
+              </p>
+            </div>
+          </div>
+        </div>
         <label className="sm:col-span-2">
           <span className="theme-muted text-sm font-black">Display name</span>
           <input name="name" defaultValue={user.name || ""} maxLength={80} className={inputClass} placeholder="Aarav & Friends" />

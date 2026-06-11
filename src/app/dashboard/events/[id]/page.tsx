@@ -20,6 +20,7 @@ import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { createGoogleCalendarUrl } from "@/lib/calendar";
 import { formatEventDate } from "@/lib/date";
+import { getEventTheme } from "@/lib/event-themes";
 import { createWhatsAppShareUrl } from "@/lib/whatsapp";
 import { prisma } from "@/lib/prisma";
 import { dashboardChannel, eventChannel } from "@/lib/realtime/events";
@@ -106,6 +107,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
       location: true,
       city: true,
       category: true,
+      coverImage: true,
       theme: true,
       visibility: true,
       capacity: true,
@@ -206,7 +208,8 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
     })
     .then((event) => ({ status: "ready" as const, event }))
     .catch((error) => {
-      console.warn("Manage event data load failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Manage event data load failed: ${message}`);
       return { status: "database-error" as const, event: null };
     });
 
@@ -225,6 +228,8 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   if (!event) {
     notFound();
   }
+
+  const eventTheme = getEventTheme(event.theme);
 
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host");
@@ -251,6 +256,22 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   const canApproveNextWaitlisted = Boolean(
     waitlistedCount > 0 && (!event.capacity || approvedGoingCount < event.capacity),
   );
+  const approvalSortOrder = {
+    PENDING: 0,
+    WAITLISTED: 1,
+    APPROVED: 2,
+    REJECTED: 3,
+  };
+  const sortedGuests = [...event.rsvps].sort((first, second) => {
+    const approvalDiff =
+      approvalSortOrder[first.approvalStatus] - approvalSortOrder[second.approvalStatus];
+
+    if (approvalDiff !== 0) {
+      return approvalDiff;
+    }
+
+    return second.createdAt.getTime() - first.createdAt.getTime();
+  });
   const poll = event.datePolls[0]
     ? {
         question: event.datePolls[0].question,
@@ -285,6 +306,15 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
       <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:px-8">
         <div className="min-w-0 space-y-6">
           <section className="film-grain relative overflow-hidden rounded-[2.4rem] bg-[radial-gradient(circle_at_22%_14%,rgba(255,46,139,0.42),transparent_28%),linear-gradient(135deg,#111,#281326,#050505)] p-7 shadow-[0_24px_90px_rgba(0,0,0,0.48)] sm:p-10">
+            {event.coverImage && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={event.coverImage}
+                alt={`Cover image for ${event.title}`}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            )}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_14%,rgba(255,46,139,0.34),transparent_28%),linear-gradient(to_top,rgba(0,0,0,0.84),rgba(0,0,0,0.28))]" />
             <div className="relative">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
                 manage invite
@@ -329,7 +359,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
               {[
                 ["city", event.city || "Not set"],
                 ["category", event.category || "Not set"],
-                ["theme", event.theme],
+                ["theme", eventTheme.label],
                 ["visibility", event.visibility],
                 ["capacity", event.capacity ? String(event.capacity) : "Open"],
                 ["plus one", event.allowPlusOne ? "Allowed" : "Off"],
@@ -480,7 +510,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             totalCount={event._count.memoryPhotos}
           />
 
-          <GuestList guests={event.rsvps} inviteUrl={inviteUrl} checkInBaseUrl={checkInUrl} />
+          <GuestList guests={sortedGuests} inviteUrl={inviteUrl} checkInBaseUrl={checkInUrl} />
         </div>
 
         <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">

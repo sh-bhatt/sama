@@ -69,23 +69,24 @@ export async function toggleInterestAction(formData: FormData): Promise<ToggleIn
     });
   }
 
-  await prisma.eventActivity.create({
-    data: {
-      eventId: event.id,
-      type: interested ? "INTERESTED_CREATED" : "INTERESTED_REMOVED",
-      message: interested
-        ? `${name || "Someone"} is interested`
-        : `${name || "Someone"} removed interest`,
-    },
-  });
-
-  const count = await prisma.eventInterest.count({ where: { eventId: event.id } });
+  const [, count] = await Promise.all([
+    prisma.eventActivity.create({
+      data: {
+        eventId: event.id,
+        type: interested ? "INTERESTED_CREATED" : "INTERESTED_REMOVED",
+        message: interested
+          ? `${name || "Someone"} is interested`
+          : `${name || "Someone"} removed interest`,
+      },
+    }),
+    prisma.eventInterest.count({ where: { eventId: event.id } }),
+  ]);
 
   revalidatePath("/discover");
   revalidatePath("/");
   revalidatePath(`/invite/${event.slug}`);
 
-  await publishEventUpdate(
+  void publishEventUpdate(
     [eventChannel(event.id), inviteChannel(event.slug), dashboardChannel(event.hostId)],
     {
       type: interested ? "INTEREST_CREATED" : "INTEREST_REMOVED",

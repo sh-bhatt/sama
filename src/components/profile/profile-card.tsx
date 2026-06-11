@@ -22,7 +22,7 @@ export function ProfileCard({ user }: { user: ProfileCardUser }) {
         <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-rose-neon to-lime-mute text-lg font-black text-zinc-950">
           {user.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+            <img src={user.imageUrl} alt={`${displayName} profile photo`} className="h-full w-full object-cover" />
           ) : (
             initials
           )}
@@ -41,7 +41,7 @@ export function ProfileCard({ user }: { user: ProfileCardUser }) {
           <a
             href={user.instagramUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
           >
             Instagram
@@ -51,7 +51,7 @@ export function ProfileCard({ user }: { user: ProfileCardUser }) {
           <a
             href={user.websiteUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]"
           >
             Website

@@ -15,9 +15,9 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const userId = isClerkConfigured() ? (await auth()).userId : null;
-  const realEvents = isDatabaseConfigured()
-    ? await prisma.event
+  const userIdPromise = isClerkConfigured() ? auth().then((session) => session.userId) : Promise.resolve(null);
+  const realEventsPromise = isDatabaseConfigured()
+    ? prisma.event
         .findMany({
           where: {
             visibility: "public",
@@ -32,7 +32,7 @@ export default async function Home() {
             },
           },
           orderBy: { eventDate: "asc" },
-          take: 12,
+          take: 8,
           select: {
             id: true,
             title: true,
@@ -48,19 +48,26 @@ export default async function Home() {
             capacity: true,
             requiresApproval: true,
             waitlistEnabled: true,
-            host: { select: { name: true, username: true, publicProfile: true } },
-            rsvps: {
-              where: { approvalStatus: "APPROVED" },
-              select: { status: true, approvalStatus: true },
+            host: { select: { name: true, imageUrl: true, username: true, publicProfile: true } },
+            _count: {
+              select: {
+                interests: true,
+                rsvps: {
+                  where: {
+                    status: "GOING",
+                    approvalStatus: "APPROVED",
+                  },
+                },
+              },
             },
-            _count: { select: { interests: true, rsvps: true } },
           },
         })
         .catch((error) => {
           console.warn("Homepage public event load failed:", error);
           return [];
         })
-    : [];
+    : Promise.resolve([]);
+  const [userId, realEvents] = await Promise.all([userIdPromise, realEventsPromise]);
   const trendingEvents = [...realEvents]
     .sort((a, b) => b._count.interests + getApprovedGoingCount(b) - (a._count.interests + getApprovedGoingCount(a)))
     .slice(0, 5);
@@ -77,12 +84,12 @@ export default async function Home() {
             <a href="#host" className="hover:text-[color:var(--foreground)]">Host</a>
             <a href="#cities" className="hover:text-[color:var(--foreground)]">Cities</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             {userId ? (
               <>
                 <Link
                   href="/dashboard"
-                  className="focus-ring rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5"
+                  className="focus-ring rounded-full bg-[color:var(--accent)] px-3 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5 sm:px-4"
                 >
                   Dashboard
                 </Link>
@@ -94,13 +101,13 @@ export default async function Home() {
               <>
                 <Link
                   href="/sign-in"
-                  className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5"
+                  className="focus-ring hidden rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5 sm:inline-flex"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/dashboard/events/new"
-                  className="focus-ring rounded-full bg-[color:var(--accent)] px-4 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5"
+                  className="focus-ring rounded-full bg-[color:var(--accent)] px-3 py-2 text-sm font-black text-[color:var(--accent-contrast)] transition hover:-translate-y-0.5 sm:px-4"
                 >
                   Create
                 </Link>
@@ -128,7 +135,7 @@ export default async function Home() {
           <EventRow title={eventRows[0].title} events={eventRows[0].events} wide />
         )}
         <CategoryPills categories={categories} />
-        <div className="bg-ivory py-4 dark:bg-ivory">
+        <div className="theme-editorial-band py-4">
           {realEvents.length ? (
             <DiscoverSection title="modern mehfil" events={realEvents.slice(0, 5)} tone="light" />
           ) : (
@@ -219,10 +226,10 @@ export default async function Home() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 text-sm font-bold text-[color:var(--muted)] sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[color:var(--foreground)]">Sama</p>
           <div className="flex flex-wrap gap-4">
-            <Link href="/dashboard/events/new" className="hover:text-white">Create an event for free</Link>
-            <a href="#host" className="hover:text-white">Help Center</a>
-            <a href="#discover" className="hover:text-white">Blog</a>
-            <Link href="/discover" className="hover:text-white">Discover</Link>
+            <Link href="/dashboard/events/new" className="hover:text-[color:var(--foreground)]">Create an event for free</Link>
+            <a href="#host" className="hover:text-[color:var(--foreground)]">Help Center</a>
+            <a href="#discover" className="hover:text-[color:var(--foreground)]">Blog</a>
+            <Link href="/discover" className="hover:text-[color:var(--foreground)]">Discover</Link>
           </div>
         </div>
       </footer>

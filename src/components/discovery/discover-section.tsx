@@ -26,17 +26,17 @@ export function DiscoverSection({
       <div className="mx-auto flex max-w-7xl items-end justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div>
           {eyebrow && (
-            <p className={isLight ? "text-sm font-black uppercase tracking-[0.18em] text-zinc-700" : "text-sm font-black uppercase tracking-[0.18em] text-lime-mute"}>
+            <p className={isLight ? "theme-editorial-muted text-sm font-black uppercase tracking-[0.18em]" : "text-sm font-black uppercase tracking-[0.18em] text-lime-mute"}>
               {eyebrow}
             </p>
           )}
-          <h2 className={isLight ? "mt-2 text-4xl font-black lowercase tracking-tight text-zinc-950 sm:text-5xl" : "mt-2 text-4xl font-black lowercase tracking-tight text-[color:var(--foreground)] sm:text-5xl"}>
+          <h2 className={isLight ? "theme-editorial-heading mt-2 text-4xl font-black lowercase tracking-tight sm:text-5xl" : "mt-2 text-4xl font-black lowercase tracking-tight text-[color:var(--foreground)] sm:text-5xl"}>
             {title}
           </h2>
         </div>
         <Link
           href={href}
-          className={isLight ? "focus-ring rounded-full bg-zinc-950 px-4 py-2 text-sm font-black text-ivory transition hover:-translate-y-0.5 hover:bg-zinc-800" : "focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5 hover:brightness-110"}
+          className={isLight ? "focus-ring theme-editorial-action rounded-full px-4 py-2 text-sm font-black transition hover:-translate-y-0.5 hover:brightness-110" : "focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)] transition hover:-translate-y-0.5 hover:brightness-110"}
         >
           see all
         </Link>

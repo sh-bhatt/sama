@@ -1,18 +1,25 @@
 # Sama
 
-Sama is a premium social event discovery, invitation, RSVP, and memories platform for modern India. Hosts can create polished invite pages, collect RSVPs, manage guests, run date polls, check people in, share QR codes, export calendar files, and open a live photo-dump style memories album after the event.
+Sama is a premium social event discovery, invitation, RSVP, and memories platform for modern India. Guests can discover public gatherings and see organizer profiles, while hosts can create polished invite pages, collect RSVPs, manage guests, post updates, run date polls, check people in, share QR codes, export calendar files, and open a live photo-dump style memories album after the event.
 
 Live demo: _coming soon_
 
 ## Features
 
 - Clerk-powered host authentication
+- Database-backed public Discover page
+- Public organizer profiles with social/trust details
 - Real event creation and host dashboard stats
 - Dynamic public invite pages
+- Public/private event visibility
+- Anonymous and signed-in Interested flow
 - Persistent RSVP flow with guest notes and plus-one support
+- Guest approval, waitlist, custom RSVP questions, and RSVP answers
 - Guest management with check-in and payment status controls
 - Activity feed for RSVPs, polls, memories, and host updates
 - Date polls with public voting
+- Host broadcasts / guest updates
+- Custom event info blocks
 - QR codes for invite links and protected check-in
 - Google Calendar links and `.ics` export
 - Cloudinary-backed public memory/photo uploads
@@ -37,14 +44,20 @@ Live demo: _coming soon_
 ## Routes Overview
 
 - `/` - public discovery/landing experience
+- `/discover` - database-backed public event discovery with filters
 - `/sign-in` and `/sign-up` - Clerk auth pages
 - `/dashboard` - protected host dashboard
+- `/dashboard/profile` - protected organizer profile settings
 - `/dashboard/events/new` - protected event creation
 - `/dashboard/events/[id]` - protected event management
 - `/dashboard/events/[id]/check-in` - protected check-in console
 - `/dashboard/events/[id]/date-poll` - protected date poll management
+- `/dashboard/events/[id]/info-blocks` - protected event info management
+- `/dashboard/events/[id]/questions` - protected custom RSVP question management
+- `/dashboard/events/[id]/broadcasts` - protected host broadcast management
 - `/invite/[slug]` - public invite, RSVP, poll, and memory teaser
 - `/invite/[slug]/memories` - public event memories album and upload form
+- `/u/[username]` - public organizer profile
 - `/invite/demo` and `/invite/demo/memories` - static demo pages
 - `/api/events/[id]/calendar` - public `.ics` calendar export
 - `/api/realtime/token` - Ably token endpoint
@@ -98,7 +111,7 @@ npx prisma generate
 npx prisma db push
 ```
 
-Run `npx prisma db push` after schema changes, including the memory photo fields used for Cloudinary cleanup and moderation.
+Run `npx prisma db push` after schema changes, including organizer profile, Discover interest, broadcast, and memory photo fields.
 
 ## Quality Checks
 
@@ -126,7 +139,6 @@ The build script runs `prisma generate` before `next build` so deployments have 
 
 ## Future Improvements
 
-- Final UI polish across edge states and mobile screenshots
 - Vercel production deployment and domain setup
 - README screenshots and resume/project bullets
 - Optional memory approval queue

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
-import { ProfileCard } from "@/components/profile/profile-card";
-import { ProfileForm } from "@/components/profile/profile-form";
+import { GlobalGuestList } from "@/components/dashboard/global-guest-list";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -35,13 +35,13 @@ function SetupMessage({
   );
 }
 
-export default async function DashboardProfilePage() {
+export default async function DashboardGuestsPage() {
   if (!isClerkConfigured()) {
     return (
       <SetupMessage
         label="Clerk setup needed"
-        title="connect auth to edit profiles"
-        body="Add Clerk keys to your local environment before opening organizer settings."
+        title="connect auth to open guest lists"
+        body="Add Clerk keys to your local environment before opening host tools."
       />
     );
   }
@@ -52,7 +52,7 @@ export default async function DashboardProfilePage() {
     return (
       <SetupMessage
         label="database setup needed"
-        title="connect Neon to save profiles"
+        title="connect Neon to load guests"
         body="Add DATABASE_URL, then run Prisma generate and db push."
       />
     );
@@ -70,19 +70,73 @@ export default async function DashboardProfilePage() {
     );
   }
 
-  const user = currentUser.dbUser;
+  const guests = await prisma.rSVP.findMany({
+    where: {
+      event: {
+        hostId: currentUser.dbUser.id,
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      status: true,
+      approvalStatus: true,
+      paymentStatus: true,
+      checkedIn: true,
+      plusOne: true,
+      note: true,
+      createdAt: true,
+      event: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          eventDate: true,
+          eventTime: true,
+        },
+      },
+      answers: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          answer: true,
+          question: {
+            select: {
+              id: true,
+              question: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  const approvalOrder = {
+    PENDING: 0,
+    WAITLISTED: 1,
+    APPROVED: 2,
+    REJECTED: 3,
+  };
+  const sortedGuests = [...guests].sort((a, b) => {
+    const approvalDiff = approvalOrder[a.approvalStatus] - approvalOrder[b.approvalStatus];
+
+    if (approvalDiff !== 0) {
+      return approvalDiff;
+    }
+
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
 
   return (
-    <main className="dark-stage min-h-screen text-foreground">
+    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+          <Link href="/" className="min-w-0 text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
           </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/discover" className="text-sm font-black text-lime-mute">
-              Discover
-            </Link>
+          <div className="flex shrink-0 items-center gap-2">
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">
               Dashboard
             </Link>
@@ -91,24 +145,20 @@ export default async function DashboardProfilePage() {
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:px-8">
-        <div className="min-w-0">
+      <section className="mx-auto w-full max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        <div>
           <Link href="/dashboard" className="text-sm font-black text-lime-mute">
             Back to dashboard
           </Link>
-          <h1 className="theme-heading mt-4 max-w-3xl text-6xl font-black lowercase leading-none">
-            organizer profile
+          <h1 className="theme-heading mt-4 max-w-4xl text-6xl font-black lowercase leading-none">
+            guest list
           </h1>
           <p className="theme-muted mt-4 max-w-2xl text-lg font-semibold leading-8">
-            Help guests understand who is hosting before they RSVP. Keep it short, public, and true to your room.
+            Every guest across your rooms. Search, filter, and jump into the right event when a RSVP needs host action.
           </p>
-          <div className="mt-8">
-            <ProfileForm user={user} />
-          </div>
         </div>
-        <aside className="scrollbar-none min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
-          <ProfileCard user={user} />
-        </aside>
+
+        <GlobalGuestList guests={sortedGuests} />
       </section>
     </main>
   );

@@ -16,16 +16,16 @@ export function CategoryPills({ categories, tone = "dark" }: CategoryPillsProps)
             className={[
               "focus-ring shrink-0 rounded-full border px-5 py-3 text-sm font-black transition hover:-translate-y-0.5",
               index === 0 && !isLight
-                ? "border-ivory bg-ivory text-zinc-950"
+                ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--background)]"
                 : "",
               index !== 0 && !isLight
                 ? "border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--foreground)] hover:brightness-110"
                 : "",
               index === 0 && isLight
-                ? "border-zinc-950 bg-zinc-950 text-ivory"
+                ? "theme-editorial-action border-transparent"
                 : "",
               index !== 0 && isLight
-                ? "border-zinc-950/20 bg-white/70 text-zinc-900 hover:border-zinc-950/35 hover:bg-white"
+                ? "border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--foreground)] hover:brightness-105"
                 : "",
             ].join(" ")}
           >

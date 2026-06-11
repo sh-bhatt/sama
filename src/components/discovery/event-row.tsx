@@ -17,7 +17,7 @@ export function EventRow({ title, events, wide = false, tone = "dark" }: EventRo
         <h2
           className={[
             "text-4xl font-black lowercase tracking-tight sm:text-5xl",
-            isLight ? "text-zinc-950" : "text-[color:var(--foreground)]",
+            isLight ? "theme-editorial-heading" : "text-[color:var(--foreground)]",
           ].join(" ")}
         >
           {title}
@@ -27,7 +27,7 @@ export function EventRow({ title, events, wide = false, tone = "dark" }: EventRo
           className={[
             "focus-ring rounded-full px-4 py-2 text-sm font-black transition hover:-translate-y-0.5",
             isLight
-              ? "bg-zinc-950 text-ivory hover:bg-zinc-800"
+              ? "theme-editorial-action hover:brightness-110"
               : "bg-[color:var(--card)] text-[color:var(--foreground)] hover:brightness-110",
           ].join(" ")}
         >

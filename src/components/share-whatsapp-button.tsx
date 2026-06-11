@@ -13,7 +13,7 @@ export function ShareWhatsAppButton({
     <a
       href={href}
       target="_blank"
-      rel="noreferrer"
+      rel="noreferrer noopener"
       className={
         className ||
         "focus-ring rounded-full bg-[#25D366] px-4 py-2 text-sm font-black text-zinc-950 transition hover:-translate-y-0.5"

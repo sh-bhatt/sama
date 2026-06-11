@@ -13,6 +13,7 @@ type AnimatedInviteCardProps = {
   theme?: InviteTheme;
   compact?: boolean;
   className?: string;
+  coverImage?: string | null;
 };
 
 const themeClasses: Record<InviteTheme, string> = {
@@ -34,6 +35,7 @@ export function AnimatedInviteCard({
   theme = "mehfil",
   compact = false,
   className,
+  coverImage,
 }: AnimatedInviteCardProps) {
   return (
     <article
@@ -49,6 +51,14 @@ export function AnimatedInviteCard({
           themeClasses[theme],
         )}
       />
+      {coverImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={coverImage}
+          alt={`Cover image for ${title}`}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_16%,rgba(255,255,255,0.28),transparent_24%),radial-gradient(circle_at_86%_72%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(to_top,rgba(0,0,0,0.74),rgba(0,0,0,0.16))]" />
       <div className="film-grain absolute inset-0" />
 
@@ -116,6 +126,14 @@ export function AnimatedInviteCard({
         </div>
 
         <div className={cn("relative min-h-64 overflow-hidden rounded-[1.7rem] border border-white/14 bg-black/28", compact ? "hidden" : "")}>
+          {coverImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coverImage}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-85"
+            />
+          )}
           <div className="gradient-drift absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(255,255,255,0.36),transparent_18%),radial-gradient(circle_at_76%_34%,rgba(198,255,69,0.28),transparent_20%),linear-gradient(135deg,rgba(0,0,0,0.12),rgba(0,0,0,0.62))]" />
           <div className="absolute inset-x-5 top-5 flex justify-between">
             <span className="rounded-full bg-black/42 px-3 py-1 text-xs font-black text-white backdrop-blur">

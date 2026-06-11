@@ -6,6 +6,9 @@ import {
   normalizeUsername,
 } from "@/lib/profile";
 
+export const maxProfileImageSize = 3 * 1024 * 1024;
+export const allowedProfileImageTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+
 const optionalText = (max: number) =>
   z.preprocess(
     (value) => (typeof value === "string" && value.trim() ? value.trim() : undefined),
@@ -48,4 +51,20 @@ export function parseProfileFormData(formData: FormData) {
     websiteUrl: formData.get("websiteUrl"),
     publicProfile: formData.get("publicProfile"),
   });
+}
+
+export function validateProfileImage(file: File | null) {
+  if (!file || file.size === 0) {
+    return null;
+  }
+
+  if (!allowedProfileImageTypes.includes(file.type as (typeof allowedProfileImageTypes)[number])) {
+    return "Upload a JPG, PNG, or WebP profile photo.";
+  }
+
+  if (file.size > maxProfileImageSize) {
+    return "Keep profile photos under 3MB.";
+  }
+
+  return null;
 }
