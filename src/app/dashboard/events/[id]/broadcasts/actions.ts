@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { canHostBroadcast } from "@/lib/event-lifecycle";
 import { prisma } from "@/lib/prisma";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
@@ -23,7 +24,19 @@ async function requireOwnedEvent(eventId: string) {
 
   const event = await prisma.event.findFirst({
     where: { id: eventId, hostId: currentUser.dbUser.id },
-    select: { id: true, slug: true, hostId: true },
+    select: {
+      id: true,
+      slug: true,
+      hostId: true,
+      status: true,
+      eventDate: true,
+      eventTime: true,
+      startsAt: true,
+      endsAt: true,
+      endedAt: true,
+      cancelledAt: true,
+      archivedAt: true,
+    },
   });
 
   if (!event) {
@@ -72,6 +85,11 @@ export async function createBroadcastAction(formData: FormData) {
   }
 
   const event = await requireOwnedEvent(parsed.data.eventId);
+
+  if (!canHostBroadcast(event)) {
+    redirectWithError(event.id, "Broadcasts are closed for this event.");
+  }
+
   const count = await prisma.eventBroadcast.count({ where: { eventId: event.id } });
 
   if (count >= maxBroadcastsPerEvent) {

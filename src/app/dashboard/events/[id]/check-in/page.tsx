@@ -147,6 +147,7 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                 channels={[eventChannel(event.id)]}
                 enabled={Boolean(process.env.ABLY_API_KEY)}
                 label="check-in live"
+                userId={currentUser.clerkUser?.id}
               />
             </div>
           </section>

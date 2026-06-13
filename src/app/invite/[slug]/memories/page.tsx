@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { MemoryGallery } from "@/components/memories/memory-gallery";
 import { MemoryUploadForm } from "@/components/memories/memory-upload-form";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { isDatabaseConfigured } from "@/lib/auth/config";
+import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { isCloudinaryConfigured } from "@/lib/cloudinary";
 import { formatEventDate } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
@@ -59,6 +60,8 @@ export default async function MemoriesPage({ params }: MemoriesPageProps) {
     notFound();
   }
 
+  const viewerUserId = isClerkConfigured() ? (await auth()).userId : null;
+
   return (
     <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
       <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -74,6 +77,7 @@ export default async function MemoriesPage({ params }: MemoriesPageProps) {
               channels={[inviteChannel(event.slug), eventChannel(event.id)]}
               enabled={Boolean(process.env.ABLY_API_KEY)}
               label="album live"
+              userId={viewerUserId}
             />
             <ThemeToggle />
           </div>

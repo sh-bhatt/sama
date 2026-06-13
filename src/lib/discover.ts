@@ -34,6 +34,13 @@ export type PublicDiscoveryEvent = {
   category: string | null;
   theme: string;
   coverImage: string | null;
+  cardDesign?: unknown;
+  status?: "DRAFT" | "PUBLISHED" | "LIVE" | "ENDED" | "CANCELLED" | "ARCHIVED" | null;
+  startsAt?: Date | null;
+  endsAt?: Date | null;
+  endedAt?: Date | null;
+  cancelledAt?: Date | null;
+  archivedAt?: Date | null;
   capacity: number | null;
   requiresApproval: boolean;
   waitlistEnabled: boolean;

@@ -16,10 +16,19 @@ import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import {
+  archiveEventAction,
+  cancelEventAction,
+  endEventAction,
+  reopenEventAction,
+  startEventAction,
+} from "@/app/dashboard/events/[id]/actions";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { createGoogleCalendarUrl } from "@/lib/calendar";
+import { getCardDesignStyles } from "@/lib/card-design";
 import { formatEventDate } from "@/lib/date";
+import { getDerivedEventStatus, getEventLifecycleLabel } from "@/lib/event-lifecycle";
 import { getEventTheme } from "@/lib/event-themes";
 import { createWhatsAppShareUrl } from "@/lib/whatsapp";
 import { prisma } from "@/lib/prisma";
@@ -108,8 +117,15 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
       city: true,
       category: true,
       coverImage: true,
+      cardDesign: true,
       theme: true,
       visibility: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      endedAt: true,
+      cancelledAt: true,
+      archivedAt: true,
       capacity: true,
       allowPlusOne: true,
       requiresApproval: true,
@@ -230,6 +246,16 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
   }
 
   const eventTheme = getEventTheme(event.theme);
+  const designStyles = getCardDesignStyles(event.cardDesign);
+  const lifecycleStatus = getDerivedEventStatus(event);
+  const lifecycleLabel = getEventLifecycleLabel(event);
+  const lifecycleCopy = {
+    upcoming: "This room opens soon.",
+    live: "This event is live now.",
+    ended: "This event has ended. Memories are now the main room.",
+    cancelled: "This event was cancelled.",
+    archived: "This event is archived and read-only.",
+  }[lifecycleStatus];
 
   const headerList = await headers();
   const host = headerList.get("x-forwarded-host") || headerList.get("host");
@@ -305,24 +331,25 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
 
       <section className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:px-8">
         <div className="min-w-0 space-y-6">
-          <section className="film-grain relative overflow-hidden rounded-[2.4rem] bg-[radial-gradient(circle_at_22%_14%,rgba(255,46,139,0.42),transparent_28%),linear-gradient(135deg,#111,#281326,#050505)] p-7 shadow-[0_24px_90px_rgba(0,0,0,0.48)] sm:p-10">
+          <section className={`relative overflow-hidden bg-[radial-gradient(circle_at_22%_14%,rgba(255,46,139,0.42),transparent_28%),linear-gradient(135deg,#111,#281326,#050505)] p-7 shadow-[0_24px_90px_rgba(0,0,0,0.48)] sm:p-10 ${designStyles.cornerClass}`} style={designStyles.style}>
             {event.coverImage && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={event.coverImage}
                 alt={`Cover image for ${event.title}`}
-                className="absolute inset-0 h-full w-full object-cover"
+                className={`absolute inset-0 h-full w-full ${designStyles.imageClass}`}
               />
             )}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_14%,rgba(255,46,139,0.34),transparent_28%),linear-gradient(to_top,rgba(0,0,0,0.84),rgba(0,0,0,0.28))]" />
+            <div className={`absolute inset-0 ${designStyles.overlayClass}`} />
+            {designStyles.textureClass && <div className={`absolute inset-0 ${designStyles.textureClass}`} />}
             <div className="relative">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+              <p className="text-sm font-black uppercase tracking-[0.18em]" style={designStyles.accentStyle}>
                 manage invite
               </p>
-              <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
+              <h1 className={`mt-3 max-w-4xl text-5xl lowercase leading-none sm:text-7xl ${designStyles.fontClass}`} style={designStyles.titleStyle}>
                 {event.title}
               </h1>
-              <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
+              <p className="mt-4 max-w-2xl text-lg font-semibold leading-8" style={designStyles.bodyStyle}>
                 {event.description || "A Sama room is ready for your people."}
               </p>
               <div className="mt-5">
@@ -333,7 +360,64 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                   ]}
                   enabled={Boolean(process.env.ABLY_API_KEY)}
                   label="room live"
+                  userId={currentUser.clerkUser?.id}
                 />
+              </div>
+            </div>
+          </section>
+
+          <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+                  {lifecycleLabel}
+                </p>
+                <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
+                  lifecycle
+                </h2>
+                <p className="theme-muted mt-2 font-semibold leading-7">{lifecycleCopy}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {lifecycleStatus !== "live" && lifecycleStatus !== "archived" && lifecycleStatus !== "cancelled" && (
+                  <form action={startEventAction}>
+                    <input type="hidden" name="eventId" value={event.id} />
+                    <button type="submit" className="focus-ring rounded-full bg-lime-mute px-4 py-2 text-sm font-black text-zinc-950">
+                      Start now
+                    </button>
+                  </form>
+                )}
+                {lifecycleStatus === "live" && (
+                  <form action={endEventAction}>
+                    <input type="hidden" name="eventId" value={event.id} />
+                    <button type="submit" className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]">
+                      End event
+                    </button>
+                  </form>
+                )}
+                {lifecycleStatus !== "cancelled" && lifecycleStatus !== "archived" && lifecycleStatus !== "ended" && (
+                  <form action={cancelEventAction}>
+                    <input type="hidden" name="eventId" value={event.id} />
+                    <button type="submit" className="focus-ring rounded-full bg-rose-neon px-4 py-2 text-sm font-black text-white">
+                      Cancel
+                    </button>
+                  </form>
+                )}
+                {lifecycleStatus !== "archived" && (
+                  <form action={archiveEventAction}>
+                    <input type="hidden" name="eventId" value={event.id} />
+                    <button type="submit" className="focus-ring rounded-full bg-zinc-800 px-4 py-2 text-sm font-black text-zinc-100">
+                      Archive
+                    </button>
+                  </form>
+                )}
+                {(lifecycleStatus === "cancelled" || lifecycleStatus === "archived" || lifecycleStatus === "ended") && (
+                  <form action={reopenEventAction}>
+                    <input type="hidden" name="eventId" value={event.id} />
+                    <button type="submit" className="focus-ring rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]">
+                      Reopen
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </section>
@@ -381,6 +465,28 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 {event.upiId && <p className="mt-1 text-sm font-bold">UPI: {event.upiId}</p>}
               </div>
             )}
+          </section>
+
+          <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
+                  Card Studio
+                </p>
+                <h2 className="theme-heading mt-2 text-3xl font-black lowercase">
+                  poster design
+                </h2>
+                <p className="theme-muted mt-2 text-sm font-semibold">
+                  Tune fonts, overlays, badges, colors, and cover behavior.
+                </p>
+              </div>
+              <Link
+                href={`/dashboard/events/${event.id}/design`}
+                className="focus-ring theme-action inline-flex rounded-full px-4 py-2 text-sm font-black"
+              >
+                Edit design
+              </Link>
+            </div>
           </section>
 
           <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">

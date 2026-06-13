@@ -21,6 +21,7 @@ export default async function Home() {
         .findMany({
           where: {
             visibility: "public",
+            status: { in: ["PUBLISHED", "LIVE"] },
             eventDate: {
               gte: new Date(
                 Date.UTC(
@@ -45,6 +46,13 @@ export default async function Home() {
             category: true,
             theme: true,
             coverImage: true,
+            cardDesign: true,
+            status: true,
+            startsAt: true,
+            endsAt: true,
+            endedAt: true,
+            cancelledAt: true,
+            archivedAt: true,
             capacity: true,
             requiresApproval: true,
             waitlistEnabled: true,

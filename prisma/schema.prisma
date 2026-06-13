@@ -8,19 +8,19 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  username  String?  @unique
-  name      String?
-  email     String?  @unique
-  imageUrl  String?
-  bio       String?
-  location  String?
-  instagramUrl String?
-  websiteUrl   String?
-  publicProfile Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  clerkId       String   @unique
+  username      String?  @unique
+  name          String?
+  email         String?  @unique
+  imageUrl      String?
+  bio           String?
+  location      String?
+  instagramUrl  String?
+  websiteUrl    String?
+  publicProfile Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   events Event[]
 
@@ -30,37 +30,44 @@ model User {
 }
 
 model Event {
-  id            String   @id @default(cuid())
-  hostId        String
-  host          User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
-  title         String
-  slug          String   @unique
-  description   String?
-  eventDate     DateTime
-  eventTime     String
-  location      String
-  coverImage    String?
-  visibility    String   @default("public")
-  theme         String   @default("Mehfil")
-  category      String?
-  city          String?
-  capacity      Int?
-  allowPlusOne  Boolean  @default(true)
-  requiresApproval Boolean @default(false)
-  waitlistEnabled  Boolean @default(true)
-  upiId         String?
-  paymentNote   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default(cuid())
+  hostId           String
+  host             User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  title            String
+  slug             String   @unique
+  description      String?
+  eventDate        DateTime
+  eventTime        String
+  location         String
+  coverImage       String?
+  cardDesign       Json?
+  status           EventStatus @default(PUBLISHED)
+  startsAt         DateTime?
+  endsAt           DateTime?
+  endedAt          DateTime?
+  cancelledAt      DateTime?
+  archivedAt       DateTime?
+  visibility       String   @default("public")
+  theme            String   @default("Mehfil")
+  category         String?
+  city             String?
+  capacity         Int?
+  allowPlusOne     Boolean  @default(true)
+  requiresApproval Boolean  @default(false)
+  waitlistEnabled  Boolean  @default(true)
+  upiId            String?
+  paymentNote      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  rsvps        RSVP[]
-  activities   EventActivity[]
-  datePolls    DatePoll[]
-  memoryPhotos MemoryPhoto[]
-  infoBlocks   EventInfoBlock[]
+  rsvps         RSVP[]
+  activities    EventActivity[]
+  datePolls     DatePoll[]
+  memoryPhotos  MemoryPhoto[]
+  infoBlocks    EventInfoBlock[]
   rsvpQuestions RsvpQuestion[]
-  broadcasts EventBroadcast[]
-  interests  EventInterest[]
+  broadcasts    EventBroadcast[]
+  interests     EventInterest[]
 
   @@index([hostId])
   @@index([slug])
@@ -69,20 +76,20 @@ model Event {
 }
 
 model RSVP {
-  id            String        @id @default(cuid())
-  eventId       String
-  event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  name          String
-  email         String?
-  phone         String?
-  status        RSVPStatus
+  id             String         @id @default(cuid())
+  eventId        String
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name           String
+  email          String?
+  phone          String?
+  status         RSVPStatus
   approvalStatus ApprovalStatus @default(APPROVED)
-  plusOne       Boolean       @default(false)
-  note          String?
-  paymentStatus PaymentStatus @default(NOT_REQUIRED)
-  checkedIn     Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  plusOne        Boolean        @default(false)
+  note           String?
+  paymentStatus  PaymentStatus  @default(NOT_REQUIRED)
+  checkedIn      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   answers RsvpAnswer[]
 
@@ -132,12 +139,12 @@ model EventInterest {
   guestId   String?
   name      String?
   createdAt DateTime @default(now())
-
+ 
+  @@unique([eventId, userId])
+  @@unique([eventId, guestId])
   @@index([eventId])
   @@index([userId])
   @@index([guestId])
-  @@unique([eventId, userId])
-  @@unique([eventId, guestId])
 }
 
 model RsvpQuestion {
@@ -252,6 +259,15 @@ enum ApprovalStatus {
   PENDING
   REJECTED
   WAITLISTED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  LIVE
+  ENDED
+  CANCELLED
+  ARCHIVED
 }
 
 enum InfoBlockType {

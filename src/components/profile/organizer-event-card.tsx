@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getCardDesignStyles } from "@/lib/card-design";
 import { formatDateTimeLabel } from "@/lib/date";
 import { getPosterVariant } from "@/lib/discover";
 
@@ -13,6 +14,7 @@ type OrganizerEvent = {
   category: string | null;
   theme: string;
   coverImage: string | null;
+  cardDesign?: unknown;
   capacity: number | null;
   requiresApproval: boolean;
   waitlistEnabled: boolean;
@@ -23,10 +25,13 @@ type OrganizerEvent = {
 };
 
 export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
+  const designStyles = getCardDesignStyles(event.cardDesign);
+
   return (
     <Link
       href={`/invite/${event.slug}`}
-      className="tilt-card group min-w-0 overflow-hidden rounded-[1.75rem] border border-white/10 bg-zinc-900 shadow-[0_22px_70px_rgba(0,0,0,0.38)]"
+      className={`tilt-card group min-w-0 overflow-hidden border border-white/10 bg-zinc-900 shadow-[0_22px_70px_rgba(0,0,0,0.38)] ${designStyles.cornerClass}`}
+      style={designStyles.style}
     >
       <div className={`film-grain relative min-h-48 bg-gradient-to-br ${getPosterVariant(event)} p-5`}>
         {event.coverImage && (
@@ -34,12 +39,13 @@ export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
           <img
             src={event.coverImage}
             alt={`Cover image for ${event.title}`}
-            className="absolute inset-0 h-full w-full object-cover opacity-75"
+            className={`absolute inset-0 h-full w-full opacity-75 ${designStyles.imageClass}`}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/16 to-transparent" />
+        <div className={`absolute inset-0 ${designStyles.overlayClass}`} />
+        {designStyles.textureClass && <div className={`absolute inset-0 ${designStyles.textureClass}`} />}
         <div className="relative flex flex-wrap gap-2">
-          <span className="rounded-full bg-ivory px-3 py-1 text-xs font-black text-zinc-950">
+          <span className={`${designStyles.badgeClass} text-zinc-950`} style={designStyles.accentBackgroundStyle}>
             {event.category || "Social"}
           </span>
           {event.requiresApproval && (
@@ -48,7 +54,7 @@ export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
             </span>
           )}
         </div>
-        <h3 className="absolute bottom-5 left-5 right-5 text-3xl font-black lowercase leading-none text-white">
+        <h3 className={`absolute bottom-5 left-5 right-5 text-3xl lowercase leading-none ${designStyles.fontClass}`} style={designStyles.titleStyle}>
           {event.title}
         </h3>
       </div>

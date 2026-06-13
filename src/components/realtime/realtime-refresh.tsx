@@ -7,6 +7,7 @@ type RealtimeRefreshProps = {
   enabled?: boolean;
   label?: string;
   showIndicator?: boolean;
+  userId?: string | null;
 };
 
 export function RealtimeRefresh({
@@ -14,8 +15,9 @@ export function RealtimeRefresh({
   enabled = true,
   label = "live",
   showIndicator = true,
+  userId,
 }: RealtimeRefreshProps) {
-  const { isLive } = useRealtimeRefresh(channels, enabled);
+  const { isLive } = useRealtimeRefresh(channels, enabled, userId);
 
   if (!enabled || !showIndicator || channels.length === 0) {
     return null;

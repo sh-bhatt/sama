@@ -6,6 +6,7 @@ import { auth } from "@clerk/nextjs/server";
 import type { ApprovalStatus, PaymentStatus } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { deleteMemoryImage } from "@/lib/cloudinary";
+import { canHostCheckInGuests } from "@/lib/event-lifecycle";
 import { prisma } from "@/lib/prisma";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import {
@@ -66,7 +67,21 @@ async function getOwnedRsvp(rsvpId: string) {
       event: { hostId: user.id },
     },
     include: {
-      event: { select: { id: true, slug: true, hostId: true } },
+      event: {
+        select: {
+          id: true,
+          slug: true,
+          hostId: true,
+          status: true,
+          eventDate: true,
+          eventTime: true,
+          startsAt: true,
+          endsAt: true,
+          endedAt: true,
+          cancelledAt: true,
+          archivedAt: true,
+        },
+      },
     },
   });
 }
@@ -76,6 +91,8 @@ function revalidateEventSurfaces(eventId: string, slug: string) {
   revalidatePath(`/dashboard/events/${eventId}/check-in`);
   revalidatePath(`/invite/${slug}`);
   revalidatePath("/dashboard");
+  revalidatePath("/discover");
+  revalidatePath("/");
 }
 
 async function approvedGoingCount(eventId: string) {
@@ -116,6 +133,11 @@ export async function updateRsvpCheckInAction(formData: FormData) {
     redirect("/dashboard");
   }
 
+  if (!canHostCheckInGuests(rsvp.event)) {
+    revalidateEventSurfaces(rsvp.eventId, rsvp.event.slug);
+    return;
+  }
+
   if (checkedIn && rsvp.approvalStatus !== "APPROVED") {
     revalidateEventSurfaces(rsvp.eventId, rsvp.event.slug);
     return;
@@ -143,6 +165,143 @@ export async function updateRsvpCheckInAction(formData: FormData) {
     hostId: rsvp.event.hostId,
     type: "CHECK_IN_UPDATED",
     message: checkedIn ? `${updated.name} checked in` : `${updated.name} check-in removed`,
+  });
+}
+
+async function getOwnedEvent(eventId: string) {
+  const user = await requireLocalUser();
+
+  return prisma.event.findFirst({
+    where: { id: eventId, hostId: user.id },
+    select: { id: true, slug: true, hostId: true },
+  });
+}
+
+export async function startEventAction(formData: FormData) {
+  const eventId = String(formData.get("eventId") || "");
+  const event = await getOwnedEvent(eventId);
+
+  if (!event) {
+    redirect("/dashboard");
+  }
+
+  const now = new Date();
+  await prisma.event.update({
+    where: { id: event.id },
+    data: {
+      status: "LIVE",
+      startsAt: now,
+      endsAt: new Date(now.getTime() + 6 * 60 * 60 * 1000),
+      endedAt: null,
+      cancelledAt: null,
+      archivedAt: null,
+    },
+  });
+
+  revalidateEventSurfaces(event.id, event.slug);
+  await publishOwnedEventChange({
+    eventId: event.id,
+    slug: event.slug,
+    hostId: event.hostId,
+    type: "EVENT_UPDATED",
+    message: "Event started",
+  });
+}
+
+export async function endEventAction(formData: FormData) {
+  const eventId = String(formData.get("eventId") || "");
+  const event = await getOwnedEvent(eventId);
+
+  if (!event) {
+    redirect("/dashboard");
+  }
+
+  await prisma.event.update({
+    where: { id: event.id },
+    data: { status: "ENDED", endedAt: new Date() },
+  });
+
+  revalidateEventSurfaces(event.id, event.slug);
+  await publishOwnedEventChange({
+    eventId: event.id,
+    slug: event.slug,
+    hostId: event.hostId,
+    type: "EVENT_UPDATED",
+    message: "Event ended",
+  });
+}
+
+export async function cancelEventAction(formData: FormData) {
+  const eventId = String(formData.get("eventId") || "");
+  const event = await getOwnedEvent(eventId);
+
+  if (!event) {
+    redirect("/dashboard");
+  }
+
+  await prisma.event.update({
+    where: { id: event.id },
+    data: { status: "CANCELLED", cancelledAt: new Date() },
+  });
+
+  revalidateEventSurfaces(event.id, event.slug);
+  await publishOwnedEventChange({
+    eventId: event.id,
+    slug: event.slug,
+    hostId: event.hostId,
+    type: "EVENT_UPDATED",
+    message: "Event cancelled",
+  });
+}
+
+export async function archiveEventAction(formData: FormData) {
+  const eventId = String(formData.get("eventId") || "");
+  const event = await getOwnedEvent(eventId);
+
+  if (!event) {
+    redirect("/dashboard");
+  }
+
+  await prisma.event.update({
+    where: { id: event.id },
+    data: { status: "ARCHIVED", archivedAt: new Date() },
+  });
+
+  revalidateEventSurfaces(event.id, event.slug);
+  await publishOwnedEventChange({
+    eventId: event.id,
+    slug: event.slug,
+    hostId: event.hostId,
+    type: "EVENT_UPDATED",
+    message: "Event archived",
+  });
+}
+
+export async function reopenEventAction(formData: FormData) {
+  const eventId = String(formData.get("eventId") || "");
+  const event = await getOwnedEvent(eventId);
+
+  if (!event) {
+    redirect("/dashboard");
+  }
+
+  await prisma.event.update({
+    where: { id: event.id },
+    data: {
+      status: "PUBLISHED",
+      endedAt: null,
+      cancelledAt: null,
+      archivedAt: null,
+    },
+  });
+
+  revalidateEventSurfaces(event.id, event.slug);
+  await publishOwnedEventChange({
+    eventId: event.id,
+    slug: event.slug,
+    hostId: event.hostId,
+    type: "EVENT_UPDATED",
+    message: "Event reopened",
   });
 }
 

@@ -69,7 +69,7 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
     "host the room";
 
   return (
-    <main className="dark-stage min-h-screen text-foreground">
+    <main className="invite-studio-canvas min-h-screen text-zinc-950 dark:text-foreground">
       <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
@@ -92,11 +92,11 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
           <Link href="/dashboard" className="text-sm font-black text-lime-mute">
             Back to dashboard
           </Link>
-          <h1 className="theme-heading mt-4 max-w-3xl text-6xl font-black lowercase leading-none">
-            start with the vibe
+          <h1 className="mt-4 max-w-3xl text-6xl font-black lowercase leading-none text-zinc-950 dark:text-white">
+            invite studio
           </h1>
-          <p className="theme-muted mt-4 max-w-2xl text-lg font-semibold leading-8">
-            Build a poster first. Add date, place, RSVP, and the small things that make people show up.
+          <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700 dark:text-zinc-300">
+            Shape the invite like a room: poster, mood, date, place, and just enough settings to get people in.
           </p>
 
           {error && (

@@ -14,19 +14,21 @@ export function PublicBroadcasts({ broadcasts }: { broadcasts: PublicBroadcast[]
   }
 
   return (
-    <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
-      <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
-        host updates
-      </p>
-      <div className="mt-5 grid gap-3">
+    <section className="border-t border-zinc-950/10 pt-6 dark:border-white/10">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black lowercase text-zinc-950 dark:text-white">Updates</h2>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3">
         {broadcasts.map((broadcast) => (
           <article
             key={broadcast.id}
             className={[
-              "rounded-[1.5rem] px-4 py-4",
+              "rounded-[1.3rem] px-4 py-4 backdrop-blur",
               broadcast.pinned
                 ? "bg-lime-mute text-zinc-950"
-                : "bg-black/35 text-[color:var(--foreground)]",
+                : "bg-white/30 text-zinc-950 dark:bg-white/[0.06] dark:text-white",
             ].join(" ")}
           >
             <div className="flex flex-wrap items-center gap-2">
@@ -35,12 +37,12 @@ export function PublicBroadcasts({ broadcasts }: { broadcasts: PublicBroadcast[]
                   pinned
                 </span>
               )}
-              <span className={broadcast.pinned ? "text-xs font-black text-zinc-800" : "theme-muted text-xs font-black"}>
+              <span className={broadcast.pinned ? "text-xs font-black text-zinc-800" : "text-xs font-black text-zinc-600 dark:text-zinc-400"}>
                 {formatEventDateShort(broadcast.createdAt)}
               </span>
             </div>
             <h2 className="mt-2 text-xl font-black">{broadcast.title}</h2>
-            <p className={broadcast.pinned ? "mt-2 font-semibold text-zinc-900" : "theme-muted mt-2 font-semibold leading-7"}>
+            <p className={broadcast.pinned ? "mt-2 font-semibold text-zinc-900" : "mt-2 font-semibold leading-7 text-zinc-700 dark:text-zinc-300"}>
               {broadcast.message}
             </p>
           </article>

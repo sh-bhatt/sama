@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createEventAction } from "@/app/dashboard/events/new/actions";
+import { CardStudioControls } from "@/components/events/card-studio-controls";
+import { RsvpChoiceButtons } from "@/components/events/rsvp-choice-buttons";
+import { defaultCardDesign, getCardDesignStyles, type CardDesign } from "@/lib/card-design";
 import { eventThemes, getEventTheme, type EventThemeKey } from "@/lib/event-themes";
 import { categories } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "focus-ring mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 font-bold text-[color:var(--foreground)] placeholder:text-[color:var(--muted)]";
+  "focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/60 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500 dark:border-white/10 dark:bg-white/8 dark:text-white dark:placeholder:text-zinc-500";
 
 const categoryOptions = categories.filter((category) => category !== "All");
 
@@ -31,6 +34,7 @@ type FormState = {
   waitlistEnabled: boolean;
   upiId: string;
   paymentNote: string;
+  durationHours: "2" | "4" | "6" | "8" | "24";
 };
 
 const initialFormState: FormState = {
@@ -49,6 +53,7 @@ const initialFormState: FormState = {
   waitlistEnabled: true,
   upiId: "",
   paymentNote: "",
+  durationHours: "6",
 };
 
 function formatPreviewDate(value: string) {
@@ -91,7 +96,9 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
   const [form, setForm] = useState<FormState>(initialFormState);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [coverFileName, setCoverFileName] = useState<string | null>(null);
+  const [cardDesign, setCardDesign] = useState<CardDesign>(defaultCardDesign);
   const selectedTheme = getEventTheme(form.theme);
+  const designStyles = getCardDesignStyles(cardDesign);
   const previewTitle = form.title.trim() || "Moonlit Mehfil";
   const previewDescription =
     form.description.trim() || selectedTheme.description || "A short note with a little personality.";
@@ -101,6 +108,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
   const previewDate = useMemo(() => formatPreviewDate(form.eventDate), [form.eventDate]);
   const previewTime = useMemo(() => formatPreviewTime(form.eventTime), [form.eventTime]);
   const capacityLabel = form.capacity.trim() ? `${form.capacity.trim()} spots` : "open room";
+  const durationLabel = form.durationHours === "24" ? "all day" : `${form.durationHours} hours`;
 
   function updateField<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -127,25 +135,25 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
   );
 
   return (
-    <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_25rem]">
+    <div className="mt-8 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_25rem_5rem]">
       <form action={createEventAction} className="min-w-0 space-y-5">
-        <section className="theme-panel rounded-[2rem] border p-5 sm:p-7">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">event details</p>
+        <section id="details" className="event-soft-panel rounded-[2rem] p-5 sm:p-7">
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">invite draft</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="sm:col-span-2">
-              <span className="theme-muted text-sm font-black">Event title</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Event title</span>
               <input
                 name="title"
                 required
                 minLength={3}
                 value={form.title}
                 onChange={(event) => updateField("title", event.target.value)}
-                className={inputClass}
+                className={`${inputClass} text-3xl font-black lowercase sm:text-5xl`}
                 placeholder="Moonlit Mehfil"
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="theme-muted text-sm font-black">Description</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Description</span>
               <textarea
                 name="description"
                 value={form.description}
@@ -156,8 +164,8 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="theme-muted text-sm font-black">Event cover photo</span>
-              <span className="theme-muted mt-1 block text-sm font-semibold">
+              <span id="cover" className="text-sm font-black text-zinc-700 dark:text-zinc-300">Event cover photo</span>
+              <span className="mt-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-400">
                 Optional. Square or wide photos work best.
               </span>
               <input
@@ -165,7 +173,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(event) => updateCoverImage(event.target.files?.[0] ?? null)}
-                className="focus-ring mt-3 w-full rounded-2xl border border-dashed border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 text-sm font-bold text-[color:var(--foreground)] file:mr-4 file:rounded-full file:border-0 file:bg-lime-mute file:px-4 file:py-2 file:text-sm file:font-black file:text-zinc-950"
+                className="focus-ring mt-3 w-full rounded-2xl border border-dashed border-zinc-950/14 bg-white/60 px-4 py-3 text-sm font-bold text-zinc-950 file:mr-4 file:rounded-full file:border-0 file:bg-lime-mute file:px-4 file:py-2 file:text-sm file:font-black file:text-zinc-950 dark:border-white/10 dark:bg-white/8 dark:text-white"
               />
               {coverFileName && (
                 <span className="mt-2 block text-sm font-black text-lime-mute">
@@ -174,7 +182,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               )}
             </label>
             <label>
-              <span className="theme-muted text-sm font-black">Date</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Date</span>
               <input
                 name="eventDate"
                 type="date"
@@ -185,7 +193,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="theme-muted text-sm font-black">Time</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Time</span>
               <input
                 name="eventTime"
                 type="time"
@@ -196,7 +204,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="theme-muted text-sm font-black">Location</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Location</span>
               <input
                 name="location"
                 required
@@ -207,7 +215,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="theme-muted text-sm font-black">City</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">City</span>
               <input
                 name="city"
                 value={form.city}
@@ -217,7 +225,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="theme-muted text-sm font-black">Category</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Category</span>
               <select
                 name="category"
                 value={form.category}
@@ -233,7 +241,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               </select>
             </label>
             <label className="sm:col-span-2">
-              <span className="theme-muted text-sm font-black">Visibility</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Visibility</span>
               <select
                 name="visibility"
                 value={form.visibility}
@@ -243,18 +251,22 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 <option value="public">Public</option>
                 <option value="private">Private link</option>
               </select>
-              <span className="theme-muted mt-2 block text-sm font-semibold">
+              <span className="mt-2 block text-sm font-semibold text-zinc-600 dark:text-zinc-400">
                 Public events can appear in Discover. Private events are visible only by link.
               </span>
             </label>
           </div>
         </section>
 
-        <section className="theme-panel rounded-[2rem] border p-5 sm:p-7">
+        <div id="studio">
+          <CardStudioControls value={cardDesign} onChange={setCardDesign} />
+        </div>
+
+        <section id="theme" className="event-soft-panel rounded-[2rem] p-5 sm:p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">invite mood</p>
-              <h2 className="theme-heading mt-2 text-3xl font-black lowercase">choose the poster energy</h2>
+              <h2 className="mt-2 text-3xl font-black lowercase text-zinc-950 dark:text-white">choose the poster energy</h2>
             </div>
             <span className={cn("w-fit rounded-full px-3 py-1 text-xs font-black", selectedTheme.accentClass)}>
               {selectedTheme.previewBadge}
@@ -274,24 +286,26 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                     "focus-ring rounded-2xl border p-2 text-left transition hover:-translate-y-0.5",
                     selected
                       ? "border-lime-mute bg-lime-mute/12 shadow-[0_18px_60px_rgba(198,255,69,0.12)]"
-                      : "border-[color:var(--border)] bg-[color:var(--card)] hover:border-[color:var(--foreground)]/35",
+                      : "border-zinc-950/10 bg-white/58 hover:border-zinc-950/35 dark:border-white/10 dark:bg-white/8 dark:hover:border-white/35",
                   )}
                 >
                   <input type="radio" name="theme" value={theme.key} checked={selected} readOnly className="sr-only" />
                   <span className={cn("block h-16 rounded-xl bg-gradient-to-br", theme.gradientClass)} />
-                  <span className="theme-heading mt-2 block text-sm font-black">{theme.label}</span>
-                  <span className="theme-muted mt-1 block text-xs font-semibold leading-5">{theme.description}</span>
+                  <span className="mt-2 block text-sm font-black text-zinc-950 dark:text-white">{theme.label}</span>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-zinc-600 dark:text-zinc-400">{theme.description}</span>
                 </button>
               );
             })}
           </div>
         </section>
 
-        <section className="theme-panel rounded-[2rem] border p-5 sm:p-7">
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-electric">guest setup</p>
+        <details id="settings" className="event-soft-panel rounded-[2rem] p-5 sm:p-7" open>
+          <summary className="cursor-pointer list-none text-sm font-black uppercase tracking-[0.18em] text-electric">
+            guest setup
+          </summary>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label>
-              <span className="theme-muted text-sm font-black">Capacity</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Capacity</span>
               <input
                 name="capacity"
                 type="number"
@@ -303,7 +317,22 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="theme-muted text-sm font-black">UPI ID optional</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Duration</span>
+              <select
+                name="durationHours"
+                value={form.durationHours}
+                onChange={(event) => updateField("durationHours", event.target.value as FormState["durationHours"])}
+                className={inputClass}
+              >
+                <option value="2">2 hours</option>
+                <option value="4">4 hours</option>
+                <option value="6">6 hours</option>
+                <option value="8">8 hours</option>
+                <option value="24">All day</option>
+              </select>
+            </label>
+            <label>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">UPI ID optional</span>
               <input
                 name="upiId"
                 value={form.upiId}
@@ -313,7 +342,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="theme-muted text-sm font-black">Payment note optional</span>
+              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Payment note optional</span>
               <input
                 name="paymentNote"
                 value={form.paymentNote}
@@ -322,10 +351,10 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 placeholder="INR 499 at venue"
               />
             </label>
-            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 dark:border-white/10 dark:bg-white/8">
               <span>
-                <span className="theme-heading block font-black">Allow plus one</span>
-                <span className="theme-muted block text-sm font-semibold">Guests can ask to bring someone along.</span>
+                <span className="block font-black text-zinc-950 dark:text-white">Allow plus one</span>
+                <span className="block text-sm font-semibold text-zinc-600 dark:text-zinc-400">Guests can ask to bring someone along.</span>
               </span>
               <input
                 name="allowPlusOne"
@@ -335,10 +364,10 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 className="size-5 accent-lime-mute"
               />
             </label>
-            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 dark:border-white/10 dark:bg-white/8">
               <span>
-                <span className="theme-heading block font-black">Require guest approval</span>
-                <span className="theme-muted block text-sm font-semibold">New Going and Maybe RSVPs wait for your nod.</span>
+                <span className="block font-black text-zinc-950 dark:text-white">Require guest approval</span>
+                <span className="block text-sm font-semibold text-zinc-600 dark:text-zinc-400">New Going and Maybe RSVPs wait for your nod.</span>
               </span>
               <input
                 name="requiresApproval"
@@ -348,10 +377,10 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 className="size-5 accent-lime-mute"
               />
             </label>
-            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3">
+            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 dark:border-white/10 dark:bg-white/8">
               <span>
-                <span className="theme-heading block font-black">Enable waitlist</span>
-                <span className="theme-muted block text-sm font-semibold">When approved capacity is full, Going RSVPs can queue up.</span>
+                <span className="block font-black text-zinc-950 dark:text-white">Enable waitlist</span>
+                <span className="block text-sm font-semibold text-zinc-600 dark:text-zinc-400">When approved capacity is full, Going RSVPs can queue up.</span>
               </span>
               <input
                 name="waitlistEnabled"
@@ -362,46 +391,49 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
           </div>
-        </section>
+        </details>
 
-        <button type="submit" className="focus-ring w-full rounded-2xl bg-lime-mute px-5 py-4 font-black text-zinc-950">
+        <button type="submit" className="focus-ring sticky bottom-4 z-20 w-full rounded-2xl bg-lime-mute px-5 py-4 font-black text-zinc-950 shadow-[0_18px_60px_rgba(198,255,69,0.28)] lg:static">
           Create invite
         </button>
       </form>
 
-      <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="theme-panel rounded-[2rem] border p-4 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+      <aside id="preview" className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+        <div className="event-soft-panel rounded-[2rem] p-4 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
           <div
             className={cn(
-              "film-grain relative min-h-[34rem] overflow-hidden rounded-[1.6rem] bg-gradient-to-br shadow-[0_26px_90px_rgba(0,0,0,0.42)]",
+              "relative min-h-[34rem] overflow-hidden bg-gradient-to-br shadow-[0_26px_90px_rgba(0,0,0,0.42)]",
+              designStyles.cornerClass,
               selectedTheme.gradientClass,
             )}
+            style={designStyles.style}
           >
             {coverPreview && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={coverPreview}
                 alt={`Preview cover for ${previewTitle}`}
-                className="absolute inset-0 h-full w-full object-cover"
+                className={cn("absolute inset-0 h-full w-full", designStyles.imageClass)}
               />
             )}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_16%,rgba(255,255,255,0.28),transparent_24%),radial-gradient(circle_at_80%_28%,rgba(198,255,69,0.22),transparent_20%),linear-gradient(to_top,rgba(0,0,0,0.82),rgba(0,0,0,0.08))]" />
+            <div className={cn("absolute inset-0", designStyles.overlayClass)} />
+            {designStyles.textureClass && <div className={cn("absolute inset-0", designStyles.textureClass)} />}
             <div className="absolute left-5 right-5 top-5 flex flex-wrap items-center justify-between gap-2">
-              <span className={cn("rounded-full px-3 py-1 text-xs font-black", selectedTheme.accentClass)}>
+              <span className={cn(designStyles.badgeClass, "text-zinc-950")} style={designStyles.accentBackgroundStyle}>
                 live preview
               </span>
-              <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-black text-white backdrop-blur">
+              <span className={cn(designStyles.badgeClass, "bg-black/35 text-white backdrop-blur")}>
                 {form.visibility === "private" ? "private link" : "discover-ready"}
               </span>
             </div>
-            <div className="absolute bottom-6 left-5 right-5">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-white/72">
+            <div className={cn("absolute bottom-6 left-5 right-5 flex flex-col", designStyles.layoutClass)}>
+              <p className="text-sm font-black uppercase tracking-[0.18em]" style={designStyles.bodyStyle}>
                 hosted by {hostName || "host the room"}
               </p>
-              <h2 className="mt-3 text-5xl font-black lowercase leading-none text-white sm:text-6xl">
+              <h2 className={cn("mt-3 text-5xl lowercase leading-none sm:text-6xl", designStyles.fontClass)} style={designStyles.titleStyle}>
                 {previewTitle}
               </h2>
-              <p className="mt-4 text-sm font-bold leading-6 text-white/78">
+              <p className="mt-4 text-sm font-bold leading-6" style={designStyles.bodyStyle}>
                 {previewDescription}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
@@ -410,26 +442,50 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                   { key: "city", label: previewCity },
                   { key: "date", label: previewDate },
                   { key: "time", label: previewTime },
+                  { key: "duration", label: durationLabel },
                   { key: "capacity", label: capacityLabel },
                 ].map((item) => (
-                  <span key={item.key} className="rounded-full bg-black/38 px-3 py-1.5 text-xs font-black text-white backdrop-blur">
+                  <span key={item.key} className={cn(designStyles.badgeClass, "bg-black/38 text-white backdrop-blur")}>
                     {item.label}
                   </span>
                 ))}
               </div>
               <div className="mt-5 rounded-[1.3rem] border border-white/12 bg-black/30 p-4 backdrop-blur">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-lime-mute">place</p>
-                <p className="mt-1 text-sm font-black text-white">{previewLocation}</p>
-                <p className="mt-3 text-xs font-bold text-white/62">
+                <p className="text-xs font-black uppercase tracking-[0.16em]" style={designStyles.accentStyle}>place</p>
+                <p className="mt-1 text-sm font-black" style={designStyles.titleStyle}>{previewLocation}</p>
+                <p className="mt-3 text-xs font-bold" style={designStyles.bodyStyle}>
                   {form.requiresApproval ? "RSVPs need approval" : "RSVPs open instantly"}
                   {form.waitlistEnabled ? " | waitlist on" : " | waitlist off"}
                   {form.allowPlusOne ? " | +1 allowed" : " | solo list"}
                 </p>
               </div>
+              <div className="mt-4 rounded-[1.4rem] border border-white/12 bg-white/16 p-3 backdrop-blur">
+                <RsvpChoiceButtons disabled size="compact" />
+              </div>
             </div>
           </div>
         </div>
       </aside>
+
+      <nav className="hidden min-w-0 lg:sticky lg:top-28 lg:flex lg:self-start">
+        <div className="event-glass flex w-full flex-col gap-2 rounded-[1.5rem] p-2">
+          {[
+            ["Theme", "#theme"],
+            ["Cover", "#cover"],
+            ["Studio", "#studio"],
+            ["Settings", "#settings"],
+            ["Preview", "#preview"],
+          ].map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              className="focus-ring rounded-[1rem] px-3 py-3 text-center text-xs font-black text-zinc-950 transition hover:bg-white/55 dark:text-white dark:hover:bg-white/12"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

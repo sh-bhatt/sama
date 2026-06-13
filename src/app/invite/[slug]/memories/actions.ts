@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { uploadMemoryImage } from "@/lib/cloudinary";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
+import { canGuestsUploadMemories } from "@/lib/event-lifecycle";
 import {
   initialMemoryUploadActionState,
   parseMemoryUploadFormData,
@@ -36,11 +37,28 @@ export async function uploadMemoryAction(
 
   const event = await prisma.event.findUnique({
     where: { slug: parsed.data.slug },
-    select: { id: true, slug: true, hostId: true, title: true },
+    select: {
+      id: true,
+      slug: true,
+      hostId: true,
+      title: true,
+      status: true,
+      eventDate: true,
+      eventTime: true,
+      startsAt: true,
+      endsAt: true,
+      endedAt: true,
+      cancelledAt: true,
+      archivedAt: true,
+    },
   });
 
   if (!event || !(file instanceof File)) {
     return { status: "error", message: "This memories room is no longer available." };
+  }
+
+  if (!canGuestsUploadMemories(event)) {
+    return { status: "error", message: "Memories open when the event is live or ended." };
   }
 
   let uploaded: Awaited<ReturnType<typeof uploadMemoryImage>>;

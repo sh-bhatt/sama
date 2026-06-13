@@ -161,6 +161,62 @@ body {
   color: var(--accent-contrast);
 }
 
+.event-canvas {
+  background:
+    radial-gradient(circle at 16% 14%, rgba(255, 46, 139, 0.2), transparent 28rem),
+    radial-gradient(circle at 84% 12%, rgba(198, 255, 61, 0.16), transparent 24rem),
+    linear-gradient(135deg, #fff2df 0%, #f4c6d8 45%, #e6d4ff 100%);
+}
+
+.dark .event-canvas {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 46, 139, 0.28), transparent 28rem),
+    radial-gradient(circle at 88% 16%, rgba(198, 255, 61, 0.14), transparent 22rem),
+    linear-gradient(135deg, #190d18 0%, #2a1125 48%, #111827 100%);
+}
+
+.event-glass {
+  border: 1px solid rgba(39, 25, 35, 0.12);
+  background: rgba(255, 248, 238, 0.48);
+  backdrop-filter: blur(22px);
+}
+
+.dark .event-glass {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(18, 18, 24, 0.46);
+}
+
+.event-soft-panel {
+  border: 1px solid rgba(39, 25, 35, 0.1);
+  background: rgba(255, 251, 244, 0.58);
+  box-shadow: 0 24px 90px rgba(81, 35, 58, 0.14);
+  backdrop-filter: blur(18px);
+}
+
+.dark .event-soft-panel {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(12, 12, 16, 0.44);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.28);
+}
+
+.text-shadow-soft {
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.28);
+}
+
+.invite-studio-canvas {
+  background:
+    radial-gradient(circle at 16% 16%, rgba(255, 46, 139, 0.2), transparent 26rem),
+    radial-gradient(circle at 82% 24%, rgba(198, 255, 61, 0.12), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 241, 224, 0.96), rgba(235, 196, 222, 0.92));
+}
+
+.dark .invite-studio-canvas {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 46, 139, 0.2), transparent 28rem),
+    radial-gradient(circle at 82% 20%, rgba(198, 255, 61, 0.1), transparent 22rem),
+    linear-gradient(135deg, #160d16, #241323 48%, #111827);
+}
+
 .theme-editorial-band {
   background:
     radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--accent-2) 13%, transparent), transparent 28%),

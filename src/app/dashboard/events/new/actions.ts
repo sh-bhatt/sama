@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { parseCardDesignFormData } from "@/lib/card-design";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { uploadEventCoverImage } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +10,7 @@ import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
 import { generateUniqueEventSlug } from "@/lib/slug";
 import { eventDateStringToDate, parseEventFormData } from "@/lib/validations/event";
+import { addEventDuration, eventDateTimeToDate } from "@/lib/event-lifecycle";
 
 function redirectWithError(message: string): never {
   redirect(`/dashboard/events/new?error=${encodeURIComponent(message)}`);
@@ -56,6 +58,10 @@ export async function createEventAction(formData: FormData) {
 
   const input = parsed.data;
   const slug = await generateUniqueEventSlug(input.title);
+  const cardDesign = parseCardDesignFormData(formData);
+  const eventDate = eventDateStringToDate(input.eventDate);
+  const startsAt = eventDateTimeToDate(eventDate, input.eventTime);
+  const endsAt = addEventDuration(startsAt, input.durationHours);
   const coverImageFile = getCoverImageFile(formData);
   let coverImage: string | null = null;
 
@@ -80,14 +86,17 @@ export async function createEventAction(formData: FormData) {
       title: input.title,
       slug,
       description: input.description,
-      eventDate: eventDateStringToDate(input.eventDate),
+      eventDate,
       eventTime: input.eventTime,
+      startsAt,
+      endsAt,
       location: input.location,
       visibility: input.visibility,
       theme: input.theme,
       category: input.category,
       city: input.city,
       coverImage,
+      cardDesign,
       capacity: input.capacity,
       allowPlusOne: input.allowPlusOne,
       requiresApproval: input.requiresApproval,

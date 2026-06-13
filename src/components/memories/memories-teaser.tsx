@@ -10,26 +10,25 @@ type TeaserMemory = {
 export function MemoriesTeaser({
   slug,
   memories,
+  prominent = false,
 }: {
   slug: string;
   memories: TeaserMemory[];
+  prominent?: boolean;
 }) {
   return (
-    <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
+    <section className="border-t border-zinc-950/10 pt-6 dark:border-white/10">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
-            memories
-          </p>
-          <h2 className="theme-heading mt-2 text-4xl font-black lowercase">
-            photo dump
+          <h2 className={prominent ? "text-4xl font-black lowercase text-zinc-950 dark:text-white" : "text-2xl font-black lowercase text-zinc-950 dark:text-white"}>
+            Memories
           </h2>
         </div>
         <Link
           href={`/invite/${slug}/memories`}
-          className="focus-ring theme-action inline-flex rounded-full px-5 py-3 text-sm font-black"
+          className="focus-ring inline-flex rounded-full bg-zinc-950 px-5 py-3 text-sm font-black text-white dark:bg-ivory dark:text-zinc-950"
         >
-          Open album
+          {prominent ? "Open album" : "Photos"}
         </Link>
       </div>
 
@@ -43,12 +42,12 @@ export function MemoriesTeaser({
               width={240}
               height={240}
               sizes="(min-width: 640px) 96px, 33vw"
-              className="aspect-square rounded-2xl object-cover"
+              className="aspect-square rounded-[1.1rem] object-cover shadow-[0_14px_35px_rgba(31,11,27,0.12)]"
             />
           ))}
         </div>
       ) : (
-        <p className="theme-muted mt-5 rounded-2xl bg-black/35 px-4 py-4 font-semibold">
+        <p className="mt-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
           Photo dump opens here after the night.
         </p>
       )}

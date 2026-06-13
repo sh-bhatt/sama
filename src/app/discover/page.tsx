@@ -94,6 +94,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
 
   const where: Prisma.EventWhereInput = {
     visibility: "public",
+    status: { in: ["PUBLISHED", "LIVE"] },
     eventDate: { gte: getBufferedToday() },
   };
 
@@ -132,6 +133,13 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
         category: true,
         theme: true,
         coverImage: true,
+        cardDesign: true,
+        status: true,
+        startsAt: true,
+        endsAt: true,
+        endedAt: true,
+        cancelledAt: true,
+        archivedAt: true,
         capacity: true,
         requiresApproval: true,
         waitlistEnabled: true,

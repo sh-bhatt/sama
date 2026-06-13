@@ -47,11 +47,8 @@ export function PublicDatePoll({ slug, pollId, question, options }: PublicDatePo
   }, [router, state.status, state.message]);
 
   return (
-    <section className="theme-panel rounded-[2rem] border p-5 sm:p-6">
-      <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
-        date poll
-      </p>
-      <h2 className="theme-heading mt-2 text-4xl font-black lowercase">{question}</h2>
+    <section className="border-t border-zinc-950/10 pt-6 dark:border-white/10">
+      <h2 className="text-3xl font-black lowercase text-zinc-950 dark:text-white">{question}</h2>
       <form action={formAction} className="mt-5 space-y-4">
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="pollId" value={pollId} />
@@ -72,7 +69,7 @@ export function PublicDatePoll({ slug, pollId, question, options }: PublicDatePo
                   "focus-ring rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-0.5",
                   active
                     ? "border-lime-mute bg-lime-mute text-zinc-950"
-                    : "border-[color:var(--border)] bg-black/35 text-white",
+                    : "border-zinc-950/10 bg-white/34 text-zinc-950 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-white",
                 ].join(" ")}
               >
                 <span className="block text-sm font-black">
@@ -90,21 +87,21 @@ export function PublicDatePoll({ slug, pollId, question, options }: PublicDatePo
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label>
-            <span className="theme-muted text-sm font-black">Name</span>
+            <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Name</span>
             <input
               name="guestName"
               required
               minLength={2}
               placeholder="Your name"
-              className="focus-ring mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 font-bold text-[color:var(--foreground)] placeholder:text-[color:var(--muted)]"
+              className="focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/40 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
             />
           </label>
           <label>
-            <span className="theme-muted text-sm font-black">Phone optional</span>
+            <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Phone optional</span>
             <input
               name="guestPhone"
               placeholder="+91, to update later"
-              className="focus-ring mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--card)] px-4 py-3 font-bold text-[color:var(--foreground)] placeholder:text-[color:var(--muted)]"
+              className="focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/40 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
             />
           </label>
         </div>

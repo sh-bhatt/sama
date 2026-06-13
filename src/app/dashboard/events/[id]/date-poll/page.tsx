@@ -149,6 +149,7 @@ export default async function DatePollPage({ params, searchParams }: DatePollPag
                 channels={[eventChannel(event.id)]}
                 enabled={Boolean(process.env.ABLY_API_KEY)}
                 label="poll live"
+                userId={currentUser.clerkUser?.id}
               />
             </div>
           </section>

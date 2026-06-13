@@ -13,7 +13,9 @@ import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured } from "@/lib/auth/config";
+import { getCardDesignStyles } from "@/lib/card-design";
 import { formatDateTimeLabel, formatEventDateShort } from "@/lib/date";
+import { getDerivedEventStatus, getEventLifecycleLabel } from "@/lib/event-lifecycle";
 import { getEventTheme } from "@/lib/event-themes";
 import { prisma } from "@/lib/prisma";
 import { dashboardChannel } from "@/lib/realtime/events";
@@ -137,7 +139,14 @@ export default async function DashboardPage() {
                 category: true,
                 theme: true,
                 coverImage: true,
+                cardDesign: true,
                 visibility: true,
+                status: true,
+                startsAt: true,
+                endsAt: true,
+                endedAt: true,
+                cancelledAt: true,
+                archivedAt: true,
                 capacity: true,
                 requiresApproval: true,
                 waitlistEnabled: true,
@@ -283,7 +292,18 @@ export default async function DashboardPage() {
           recentRsvps: [],
           sevenDayRsvps: [],
         };
-  const realEvents = dashboardData.events;
+  const lifecycleRank = { live: 0, upcoming: 1, ended: 2, cancelled: 3, archived: 4 };
+  const realEvents = [...dashboardData.events].sort((first, second) => {
+    const firstStatus = getDerivedEventStatus(first);
+    const secondStatus = getDerivedEventStatus(second);
+    const statusDiff = lifecycleRank[firstStatus] - lifecycleRank[secondStatus];
+
+    if (statusDiff !== 0) {
+      return statusDiff;
+    }
+
+    return first.eventDate.getTime() - second.eventDate.getTime();
+  });
   const rsvpCountFor = (eventId: string, predicate: (group: (typeof dashboardData.rsvpGroups)[number]) => boolean) =>
     dashboardData.rsvpGroups
       .filter((group) => group.eventId === eventId && predicate(group))
@@ -349,7 +369,9 @@ export default async function DashboardPage() {
       (!userResult.dbUser.username || !userResult.dbUser.bio),
   );
   const now = new Date();
-  const nextEvent = realEvents.find((event) => event.eventDate >= startOfLocalDay(now)) ?? realEvents[0];
+  const nextEvent =
+    realEvents.find((event) => ["live", "upcoming"].includes(getDerivedEventStatus(event))) ??
+    realEvents[0];
   const eventNeedingShare = realEvents.find((event) => event._count.rsvps === 0);
   const eventNeedingInfo = realEvents.find((event) => event._count.infoBlocks === 0);
   const eventWithin24Hours = realEvents.find((event) => {
@@ -423,6 +445,7 @@ export default async function DashboardPage() {
                   channels={[dashboardRealtimeChannel]}
                   enabled={Boolean(process.env.ABLY_API_KEY)}
                   label="dashboard live"
+                  userId={userResult.clerkUser?.id}
                 />
               </div>
             )}
@@ -505,6 +528,9 @@ export default async function DashboardPage() {
                 <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                   {realEvents.map((event) => {
                     const inviteUrl = `${origin}/invite/${event.slug}`;
+                    const designStyles = getCardDesignStyles(event.cardDesign);
+                    const lifecycleStatus = getDerivedEventStatus(event);
+                    const lifecycleLabel = getEventLifecycleLabel(event);
                     const eventPendingApprovals = rsvpCountFor(
                       event.id,
                       (group) => group.approvalStatus === "PENDING",
@@ -514,7 +540,8 @@ export default async function DashboardPage() {
                     return (
                       <article
                         key={event.id}
-                        className="theme-panel tilt-card min-w-0 overflow-hidden rounded-[1.75rem] border"
+                        className={`theme-panel tilt-card min-w-0 overflow-hidden border ${designStyles.cornerClass}`}
+                        style={designStyles.style}
                       >
                         <div className="film-grain relative min-h-44 bg-gradient-to-br from-fuchsia-950 via-rose-600 to-lime-mute p-5">
                           {event.coverImage && (
@@ -522,12 +549,29 @@ export default async function DashboardPage() {
                             <img
                               src={event.coverImage}
                               alt={`Cover image for ${event.title}`}
-                              className="absolute inset-0 h-full w-full object-cover"
+                              className={`absolute inset-0 h-full w-full ${designStyles.imageClass}`}
                             />
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/12 to-black/12" />
-                          <span className="relative z-10 rounded-full bg-ivory px-3 py-1 text-xs font-black text-zinc-950">
+                          <div className={`absolute inset-0 ${designStyles.overlayClass}`} />
+                          {designStyles.textureClass && <div className={`absolute inset-0 ${designStyles.textureClass}`} />}
+                          <span className={`relative z-10 ${designStyles.badgeClass} text-zinc-950`} style={designStyles.accentBackgroundStyle}>
                             {event.category || event.theme}
+                          </span>
+                          <span
+                            className={[
+                              "absolute left-5 top-14 z-10 rounded-full px-3 py-1 text-xs font-black",
+                              lifecycleStatus === "live"
+                                ? "bg-lime-mute text-zinc-950"
+                                : lifecycleStatus === "ended"
+                                  ? "bg-white/14 text-zinc-200"
+                                  : lifecycleStatus === "cancelled"
+                                    ? "bg-rose-neon text-white"
+                                    : lifecycleStatus === "archived"
+                                      ? "bg-zinc-700 text-zinc-200"
+                                      : "bg-black/55 text-lime-200",
+                            ].join(" ")}
+                          >
+                            {lifecycleLabel}
                           </span>
                           <span className="absolute right-5 top-5 z-10 grid size-9 place-items-center overflow-hidden rounded-full border border-white/20 bg-ivory text-xs font-black text-zinc-950">
                             {hostImageUrl ? (
@@ -541,7 +585,7 @@ export default async function DashboardPage() {
                               hostInitials
                             )}
                           </span>
-                          <h3 className="absolute bottom-5 left-5 right-5 text-3xl font-black lowercase leading-none text-white">
+                          <h3 className={`absolute bottom-5 left-5 right-5 text-3xl lowercase leading-none ${designStyles.fontClass}`} style={designStyles.titleStyle}>
                             {event.title}
                           </h3>
                         </div>
@@ -646,6 +690,7 @@ export default async function DashboardPage() {
                   guests={featuredGuests}
                   theme={getEventTheme(featuredEvent.theme).inviteTheme}
                   coverImage={featuredEvent.coverImage}
+                  cardDesign={featuredEvent.cardDesign}
                   compact
                 />
               </section>

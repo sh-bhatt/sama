@@ -16,6 +16,7 @@ import {
 } from "@/lib/validations/date-poll";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
+import { canGuestsRsvp, canGuestsVotePoll } from "@/lib/event-lifecycle";
 
 function statusMessage(name: string, status: RSVPStatus, approvalStatus: ApprovalStatus) {
   if (approvalStatus === "PENDING") {
@@ -126,6 +127,14 @@ export async function submitRsvpAction(
       id: true,
       slug: true,
       hostId: true,
+      status: true,
+      eventDate: true,
+      eventTime: true,
+      startsAt: true,
+      endsAt: true,
+      endedAt: true,
+      cancelledAt: true,
+      archivedAt: true,
       capacity: true,
       requiresApproval: true,
       waitlistEnabled: true,
@@ -137,6 +146,10 @@ export async function submitRsvpAction(
 
   if (!event) {
     return { status: "error", message: "This invite is no longer available." };
+  }
+
+  if (!canGuestsRsvp(event)) {
+    return { status: "error", message: "RSVPs are closed for this event." };
   }
 
   const parsedAnswers = parseRsvpAnswers(formData, event.rsvpQuestions);
@@ -278,6 +291,10 @@ export async function submitPollVoteAction(
 
   if (!event || !poll) {
     return { status: "error", message: "This date poll is no longer available." };
+  }
+
+  if (!canGuestsVotePoll(event)) {
+    return { status: "error", message: "Voting is closed for this event." };
   }
 
   const allowedOptionIds = new Set(poll.options.map((option) => option.id));

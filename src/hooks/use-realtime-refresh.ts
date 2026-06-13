@@ -3,24 +3,34 @@
 import { useEffect, useMemo, useState } from "react";
 import { Realtime, type RealtimeChannel } from "ably";
 import { useRouter } from "next/navigation";
+import { getStableRealtimeClientId } from "@/lib/realtime/client-id";
 import { realtimeMessageName } from "@/lib/realtime/events";
 
-let realtimeClient: Realtime | null = null;
+let realtimeClientEntry: { clientId: string; client: Realtime } | null = null;
 
-function getRealtimeClient() {
+function getRealtimeClient(clientId: string) {
   if (typeof window === "undefined") {
     return null;
   }
 
-  realtimeClient ??= new Realtime({
-    authUrl: "/api/realtime/token",
-    authMethod: "GET",
-  });
+  if (realtimeClientEntry && realtimeClientEntry.clientId !== clientId) {
+    realtimeClientEntry.client.close();
+    realtimeClientEntry = null;
+  }
 
-  return realtimeClient;
+  realtimeClientEntry ??= {
+    clientId,
+    client: new Realtime({
+      clientId,
+      authUrl: `/api/realtime/token?clientId=${encodeURIComponent(clientId)}`,
+      authMethod: "GET",
+    }),
+  };
+
+  return realtimeClientEntry.client;
 }
 
-export function useRealtimeRefresh(channels: string[], enabled = true) {
+export function useRealtimeRefresh(channels: string[], enabled = true, userId?: string | null) {
   const router = useRouter();
   const [isLive, setIsLive] = useState(false);
   const channelKey = useMemo(
@@ -33,7 +43,13 @@ export function useRealtimeRefresh(channels: string[], enabled = true) {
       return;
     }
 
-    const client = getRealtimeClient();
+    const clientId = getStableRealtimeClientId(userId);
+
+    if (!clientId) {
+      return;
+    }
+
+    const client = getRealtimeClient(clientId);
 
     if (!client) {
       return;
@@ -82,7 +98,7 @@ export function useRealtimeRefresh(channels: string[], enabled = true) {
         channel.unsubscribe(realtimeMessageName, refresh);
       });
     };
-  }, [channelKey, enabled, router]);
+  }, [channelKey, enabled, router, userId]);
 
   return { isLive };
 }
