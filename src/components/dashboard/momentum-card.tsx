@@ -22,7 +22,7 @@ export function MomentumCard({ momentum }: MomentumCardProps) {
           </p>
           <h3 className="theme-heading mt-2 text-3xl font-black lowercase">the list is moving</h3>
         </div>
-        <span className="shrink-0 rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-zinc-300">
+        <span className="shrink-0 rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1.5 text-xs font-black text-zinc-700">
           7 days
         </span>
       </div>
@@ -31,7 +31,7 @@ export function MomentumCard({ momentum }: MomentumCardProps) {
         <div className="mt-6 flex h-44 items-end gap-2 sm:gap-3">
           {momentum.map((item, index) => (
             <div key={item.day} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-              <div className="flex h-32 w-full items-end rounded-full bg-black/35 p-1">
+              <div className="flex h-32 w-full items-end rounded-full border border-zinc-950/10 bg-white/58 p-1">
                 <div
                   className={`w-full rounded-full ${barColors[index % barColors.length]} shadow-[0_0_24px_rgba(198,255,69,0.18)]`}
                   style={{ height: `${Math.max(12, (item.count / maxCount) * 100)}%` }}
@@ -43,7 +43,7 @@ export function MomentumCard({ momentum }: MomentumCardProps) {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-[1.5rem] bg-black/35 px-4 py-8">
+        <div className="mt-6 rounded-[1.5rem] border border-zinc-950/10 bg-white/58 px-4 py-8">
           <h4 className="theme-heading text-2xl font-black lowercase">no RSVP movement yet</h4>
           <p className="theme-muted mt-2 text-sm font-semibold leading-6">
             Share your invite to start the signal.

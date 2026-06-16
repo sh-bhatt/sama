@@ -12,7 +12,7 @@ export function EventCard({ title, date, location, rsvps, status }: EventCardPro
   return (
     <article className="tilt-card overflow-hidden rounded-[1.75rem] border border-plum-950/10 bg-white p-4 shadow-soft">
       <div className="grid gap-4 sm:grid-cols-[9rem_1fr]">
-        <div className="relative min-h-36 rounded-[1.35rem] bg-[radial-gradient(circle_at_22%_20%,#f8cbd4_0,#f8cbd4_18%,transparent_19%),linear-gradient(135deg,#4d1734,#e96f62,#f3b45b)] p-4 text-white">
+        <div className="relative min-h-36 rounded-[1.35rem] bg-[radial-gradient(circle_at_22%_20%,#f8cbd4_0,#f8cbd4_18%,transparent_19%),linear-gradient(135deg,#4d1734,#e96f62,#f3b45b)] p-4 text-zinc-950">
           <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-bold">{date}</span>
           <p className="absolute bottom-4 left-4 right-4 text-lg font-semibold leading-tight">{title}</p>
         </div>
@@ -41,7 +41,7 @@ export function EventCard({ title, date, location, rsvps, status }: EventCardPro
           </button>
           <Link
             href="/invite/demo"
-            className="rounded-full bg-plum-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-plum-800"
+            className="rounded-full bg-plum-900 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-plum-800"
           >
             Manage
           </Link>

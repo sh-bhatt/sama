@@ -1,11 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
+import { isClerkConfigured } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
 import { uploadMemoryImage } from "@/lib/cloudinary";
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
 import { canGuestsUploadMemories } from "@/lib/event-lifecycle";
+import { rsvpAccessCookieName } from "@/lib/rsvp-access";
 import {
   initialMemoryUploadActionState,
   parseMemoryUploadFormData,
@@ -50,6 +54,11 @@ export async function uploadMemoryAction(
       endedAt: true,
       cancelledAt: true,
       archivedAt: true,
+      host: {
+        select: {
+          clerkId: true,
+        },
+      },
     },
   });
 
@@ -59,6 +68,23 @@ export async function uploadMemoryAction(
 
   if (!canGuestsUploadMemories(event)) {
     return { status: "error", message: "Memories open when the event is live or ended." };
+  }
+
+  const viewerUserId = isClerkConfigured() ? (await auth()).userId : null;
+  const isOwner = Boolean(viewerUserId && event.host.clerkId === viewerUserId);
+  const accessCookie = (await cookies()).get(rsvpAccessCookieName(event.id))?.value;
+  const hasRsvpAccess =
+    isOwner ||
+    Boolean(
+      accessCookie &&
+        (await prisma.rSVP.findFirst({
+          where: { id: accessCookie, eventId: event.id },
+          select: { id: true },
+        })),
+    );
+
+  if (!hasRsvpAccess) {
+    return { status: "error", message: "RSVP first to add memories to this room." };
   }
 
   let uploaded: Awaited<ReturnType<typeof uploadMemoryImage>>;

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { GlobalGuestList } from "@/components/dashboard/global-guest-list";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +17,7 @@ function SetupMessage({
   body: string;
 }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -130,8 +129,8 @@ export default async function DashboardGuestsPage() {
   });
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="min-w-0 text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -140,7 +139,6 @@ export default async function DashboardGuestsPage() {
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">
               Dashboard
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>

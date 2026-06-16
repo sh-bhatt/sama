@@ -30,7 +30,7 @@ function getRealtimeClient(clientId: string) {
   return realtimeClientEntry.client;
 }
 
-export function useRealtimeRefresh(channels: string[], enabled = true, userId?: string | null) {
+export function useRealtimeRefresh(channels: string[], enabled = true, clerkUserId?: string | null) {
   const router = useRouter();
   const [isLive, setIsLive] = useState(false);
   const channelKey = useMemo(
@@ -43,7 +43,7 @@ export function useRealtimeRefresh(channels: string[], enabled = true, userId?: 
       return;
     }
 
-    const clientId = getStableRealtimeClientId(userId);
+    const clientId = getStableRealtimeClientId(clerkUserId);
 
     if (!clientId) {
       return;
@@ -98,7 +98,7 @@ export function useRealtimeRefresh(channels: string[], enabled = true, userId?: 
         channel.unsubscribe(realtimeMessageName, refresh);
       });
     };
-  }, [channelKey, enabled, router, userId]);
+  }, [channelKey, enabled, router, clerkUserId]);
 
   return { isLive };
 }

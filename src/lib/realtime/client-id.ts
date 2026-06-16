@@ -20,12 +20,12 @@ function createGuestUuid() {
     .join("");
 }
 
-export function normalizeRealtimeUserClientId(userId?: string | null) {
-  return userId ? `user:${userId}` : null;
+export function normalizeRealtimeUserClientId(clerkUserId?: string | null) {
+  return clerkUserId ? `user:${clerkUserId}` : null;
 }
 
-export function getStableRealtimeClientId(userId?: string | null) {
-  const userClientId = normalizeRealtimeUserClientId(userId);
+export function getStableRealtimeClientId(clerkUserId?: string | null) {
+  const userClientId = normalizeRealtimeUserClientId(clerkUserId);
 
   if (userClientId) {
     return userClientId;
@@ -46,4 +46,3 @@ export function getStableRealtimeClientId(userId?: string | null) {
 
   return `guest:${guestId}`;
 }
-

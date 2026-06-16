@@ -21,8 +21,14 @@ export async function GET(request: Request) {
     return Response.json({ error: "Invalid realtime client id." }, { status: 400 });
   }
 
-  if (clientId.startsWith("user:") && clientId !== `user:${clerkUserId}`) {
-    return Response.json({ error: "Realtime client id does not match the signed-in user." }, { status: 403 });
+  if (clientId.startsWith("user:")) {
+    if (!clerkUserId) {
+      return Response.json({ error: "Signed-in realtime client id requires Clerk auth." }, { status: 401 });
+    }
+
+    if (clientId !== `user:${clerkUserId}`) {
+      return Response.json({ error: "Realtime client id does not match the signed-in user." }, { status: 403 });
+    }
   }
 
   const client = new Rest({ key: apiKey });

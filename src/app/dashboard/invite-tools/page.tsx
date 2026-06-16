@@ -3,7 +3,6 @@ import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { CopyLinkButton } from "@/components/copy-link-button";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { formatDateTimeLabel } from "@/lib/date";
@@ -22,7 +21,7 @@ function SetupMessage({
   body: string;
 }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -101,8 +100,8 @@ export default async function DashboardInviteToolsPage() {
   });
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="min-w-0 text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -111,7 +110,6 @@ export default async function DashboardInviteToolsPage() {
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">
               Dashboard
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -143,10 +141,10 @@ export default async function DashboardInviteToolsPage() {
                         <span className="rounded-full bg-lime-mute px-3 py-1 text-xs font-black text-zinc-950">
                           {event.visibility}
                         </span>
-                        <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-black text-white">
+                        <span className="rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1 text-xs font-black text-zinc-950">
                           {event._count.rsvps} RSVPs
                         </span>
-                        <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-black text-rose-neon">
+                        <span className="rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1 text-xs font-black text-rose-neon">
                           {event._count.interests} interested
                         </span>
                       </div>
@@ -169,7 +167,7 @@ export default async function DashboardInviteToolsPage() {
                     </Link>
                   </div>
 
-                  <p className="theme-muted mt-5 break-all rounded-2xl bg-black/35 px-4 py-3 text-sm font-semibold">
+                  <p className="theme-muted mt-5 break-all rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-semibold">
                     {inviteUrl}
                   </p>
 

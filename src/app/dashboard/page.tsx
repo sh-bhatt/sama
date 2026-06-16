@@ -2,29 +2,60 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
-import { CopyLinkButton } from "@/components/copy-link-button";
-import { HostChecklist } from "@/components/dashboard/host-checklist";
-import { MomentumCard } from "@/components/dashboard/momentum-card";
-import { PulseCard } from "@/components/dashboard/pulse-card";
-import { RecentRsvps } from "@/components/dashboard/recent-rsvps";
-import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
-import { ProfileCompletionCard } from "@/components/profile/profile-completion-card";
+import { DashboardEventCardMenu } from "@/components/dashboard/dashboard-event-card-menu";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured } from "@/lib/auth/config";
 import { getCardDesignStyles } from "@/lib/card-design";
-import { formatDateTimeLabel, formatEventDateShort } from "@/lib/date";
-import { getDerivedEventStatus, getEventLifecycleLabel } from "@/lib/event-lifecycle";
-import { getEventTheme } from "@/lib/event-themes";
+import { formatDateTimeLabel } from "@/lib/date";
+import { getDerivedEventStatus } from "@/lib/event-lifecycle";
 import { prisma } from "@/lib/prisma";
 import { dashboardChannel } from "@/lib/realtime/events";
 
 export const dynamic = "force-dynamic";
 
+type DashboardFilter = "hosting" | "upcoming" | "live" | "past" | "archived";
+
+type DashboardPageProps = {
+  searchParams: Promise<{
+    q?: string | string[];
+    status?: string | string[];
+  }>;
+};
+
 function warnQueryFailure(label: string, error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   console.warn(`${label} failed: ${message}`);
+}
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function toDashboardFilter(value: string | string[] | undefined): DashboardFilter {
+  const status = firstParam(value);
+
+  if (status === "upcoming" || status === "live" || status === "past" || status === "archived") {
+    return status;
+  }
+
+  return "hosting";
+}
+
+function dashboardFilterHref(status: DashboardFilter, query: string) {
+  const params = new URLSearchParams();
+
+  if (status !== "hosting") {
+    params.set("status", status);
+  }
+
+  if (query) {
+    params.set("q", query);
+  }
+
+  const suffix = params.toString();
+
+  return suffix ? `/dashboard?${suffix}` : "/dashboard";
 }
 
 async function safeQuery<T>(label: string, query: Promise<T>, fallback: T) {
@@ -36,49 +67,14 @@ async function safeQuery<T>(label: string, query: Promise<T>, fallback: T) {
   }
 }
 
-function startOfLocalDay(date = new Date()) {
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-  return day;
-}
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const activeFilter = toDashboardFilter(resolvedSearchParams.status);
+  const searchQuery = (firstParam(resolvedSearchParams.q) ?? "").trim();
 
-function localDateKey(date: Date) {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
-function buildSevenDayMomentum(rsvps: { createdAt: Date }[]) {
-  const today = startOfLocalDay();
-  const days = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (6 - index));
-
-    return {
-      key: localDateKey(date),
-      day: new Intl.DateTimeFormat("en-IN", { weekday: "short" }).format(date),
-      count: 0,
-    };
-  });
-
-  const countByDay = new Map(days.map((day) => [day.key, day.count]));
-  rsvps.forEach((rsvp) => {
-    const key = localDateKey(startOfLocalDay(rsvp.createdAt));
-    countByDay.set(key, (countByDay.get(key) ?? 0) + 1);
-  });
-
-  return days.map((day) => ({
-    day: day.day,
-    count: countByDay.get(day.key) ?? 0,
-  }));
-}
-
-export default async function DashboardPage() {
   if (!isClerkConfigured()) {
     return (
-      <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+      <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
         <div className="mx-auto max-w-3xl">
           <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
@@ -118,9 +114,6 @@ export default async function DashboardPage() {
     primaryEmail?.split("@")[0] ||
     "host";
   const dbUser = userResult.status === "ready" ? userResult.dbUser : null;
-  const todayStart = startOfLocalDay();
-  const sevenDaysStart = new Date(todayStart);
-  sevenDaysStart.setDate(todayStart.getDate() - 6);
   const dashboardData =
     dbUser
       ? await (async () => {
@@ -149,9 +142,7 @@ export default async function DashboardPage() {
                 archivedAt: true,
                 capacity: true,
                 requiresApproval: true,
-                waitlistEnabled: true,
-                datePolls: { select: { id: true }, take: 1 },
-                _count: { select: { rsvps: true, memoryPhotos: true, infoBlocks: true, interests: true } },
+                _count: { select: { rsvps: true } },
               },
             });
             const eventIds = events.map((event) => event.id);
@@ -162,22 +153,10 @@ export default async function DashboardPage() {
                 partial: false,
                 events,
                 rsvpGroups: [],
-                latestActivity: [],
-                newRsvpsToday: 0,
-                interestedGuests: 0,
-                recentRsvps: [],
-                sevenDayRsvps: [],
               };
             }
 
-            const [
-              rsvpGroups,
-              latestActivity,
-              newRsvpsToday,
-              interestedGuests,
-              recentRsvps,
-              sevenDayRsvps,
-            ] = await Promise.all([
+            const [rsvpGroups] = await Promise.all([
               safeQuery(
                 "Dashboard RSVP groups load",
                 prisma.rSVP.groupBy({
@@ -187,84 +166,15 @@ export default async function DashboardPage() {
                 }),
                 [],
               ),
-              safeQuery(
-                "Dashboard activity load",
-                prisma.eventActivity.findMany({
-                  where: { eventId: { in: eventIds } },
-                  orderBy: { createdAt: "desc" },
-                  take: 5,
-                  select: {
-                    id: true,
-                    message: true,
-                    createdAt: true,
-                    event: { select: { title: true } },
-                  },
-                }),
-                [],
-              ),
-              safeQuery(
-                "Dashboard today RSVP count load",
-                prisma.rSVP.count({
-                  where: {
-                    eventId: { in: eventIds },
-                    createdAt: { gte: todayStart },
-                  },
-                }),
-                0,
-              ),
-              safeQuery(
-                "Dashboard interest count load",
-                prisma.eventInterest.count({
-                  where: { eventId: { in: eventIds } },
-                }),
-                0,
-              ),
-              safeQuery(
-                "Dashboard recent RSVP load",
-                prisma.rSVP.findMany({
-                  where: { eventId: { in: eventIds } },
-                  orderBy: { createdAt: "desc" },
-                  take: 5,
-                  select: {
-                    id: true,
-                    name: true,
-                    status: true,
-                    createdAt: true,
-                    event: { select: { title: true } },
-                  },
-                }),
-                [],
-              ),
-              safeQuery(
-                "Dashboard momentum RSVP load",
-                prisma.rSVP.findMany({
-                  where: {
-                    eventId: { in: eventIds },
-                    createdAt: { gte: sevenDaysStart },
-                  },
-                  select: { createdAt: true },
-                }),
-                [],
-              ),
             ]);
 
             return {
               status: "ready" as const,
               partial:
                 rsvpGroups.length === 0 &&
-                latestActivity.length === 0 &&
-                newRsvpsToday === 0 &&
-                interestedGuests === 0 &&
-                recentRsvps.length === 0 &&
-                sevenDayRsvps.length === 0 &&
-                events.some((event) => event._count.rsvps > 0 || event._count.interests > 0),
+                events.some((event) => event._count.rsvps > 0),
               events,
               rsvpGroups,
-              latestActivity,
-              newRsvpsToday,
-              interestedGuests,
-              recentRsvps,
-              sevenDayRsvps,
             };
           } catch (error) {
             warnQueryFailure("Dashboard event load", error);
@@ -273,11 +183,6 @@ export default async function DashboardPage() {
               partial: false,
               events: [],
               rsvpGroups: [],
-              latestActivity: [],
-              newRsvpsToday: 0,
-              interestedGuests: 0,
-              recentRsvps: [],
-              sevenDayRsvps: [],
             };
           }
         })()
@@ -286,11 +191,6 @@ export default async function DashboardPage() {
           partial: false,
           events: [],
           rsvpGroups: [],
-          latestActivity: [],
-          newRsvpsToday: 0,
-          interestedGuests: 0,
-          recentRsvps: [],
-          sevenDayRsvps: [],
         };
   const lifecycleRank = { live: 0, upcoming: 1, ended: 2, cancelled: 3, archived: 4 };
   const realEvents = [...dashboardData.events].sort((first, second) => {
@@ -304,56 +204,67 @@ export default async function DashboardPage() {
 
     return first.eventDate.getTime() - second.eventDate.getTime();
   });
-  const rsvpCountFor = (eventId: string, predicate: (group: (typeof dashboardData.rsvpGroups)[number]) => boolean) =>
-    dashboardData.rsvpGroups
-      .filter((group) => group.eventId === eventId && predicate(group))
-      .reduce((total, group) => total + group._count._all, 0);
+  const matchesSearch = (event: (typeof realEvents)[number]) => {
+    if (!searchQuery) {
+      return true;
+    }
+
+    const haystack = [
+      event.title,
+      event.location,
+      event.city,
+      event.category,
+      event.theme,
+      event.visibility,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(searchQuery.toLowerCase());
+  };
+  const matchesFilter = (event: (typeof realEvents)[number]) => {
+    const status = getDerivedEventStatus(event);
+
+    if (activeFilter === "hosting") {
+      return status !== "archived";
+    }
+
+    if (activeFilter === "past") {
+      return status === "ended" || status === "cancelled";
+    }
+
+    return status === activeFilter;
+  };
+  const filteredEvents = realEvents.filter((event) => matchesSearch(event) && matchesFilter(event));
+  const lifecycleCounts = realEvents.reduce(
+    (counts, event) => {
+      const status = getDerivedEventStatus(event);
+
+      counts.hosting += status === "archived" ? 0 : 1;
+      counts.upcoming += status === "upcoming" ? 1 : 0;
+      counts.live += status === "live" ? 1 : 0;
+      counts.past += status === "ended" || status === "cancelled" ? 1 : 0;
+      counts.archived += status === "archived" ? 1 : 0;
+
+      return counts;
+    },
+    { hosting: 0, upcoming: 0, live: 0, past: 0, archived: 0 } satisfies Record<DashboardFilter, number>,
+  );
   const totalRsvps = realEvents.reduce((total, event) => total + event._count.rsvps, 0);
-  const approvedGuests = dashboardData.rsvpGroups
-    .filter((group) => group.approvalStatus === "APPROVED")
-    .reduce((total, group) => total + group._count._all, 0);
   const pendingApprovals = dashboardData.rsvpGroups
     .filter((group) => group.approvalStatus === "PENDING")
     .reduce((total, group) => total + group._count._all, 0);
   const checkedInGuests = dashboardData.rsvpGroups
     .filter((group) => group.checkedIn)
     .reduce((total, group) => total + group._count._all, 0);
-  const latestActivity = dashboardData.latestActivity.map((activity) => ({
-    id: activity.id,
-    message: activity.message,
-    eventTitle: activity.event.title,
-  }));
-  const recentRsvps = dashboardData.recentRsvps.map((rsvp) => ({
-    id: rsvp.id,
-    name: rsvp.name,
-    status: rsvp.status,
-    eventTitle: rsvp.event.title,
-  }));
-  const momentum = buildSevenDayMomentum(dashboardData.sevenDayRsvps);
-  const realStats =
-    userResult.status === "ready"
-      ? [
-          { label: "live events", value: String(realEvents.length), detail: "saved invites" },
-          {
-            label: "total RSVPs",
-            value: String(totalRsvps),
-            detail: "all guest replies",
-          },
-          {
-            label: "approved",
-            value: String(approvedGuests),
-            detail: "cleared guests",
-          },
-          { label: "pending", value: String(pendingApprovals), detail: "need host approval" },
-          { label: "check-ins", value: String(checkedInGuests), detail: "guests at the room" },
-        ]
-      : [
-          { label: "live events", value: "0", detail: "saved invites" },
-          { label: "total RSVPs", value: "0", detail: "all guest replies" },
-          { label: "approved", value: "0", detail: "cleared guests" },
-          { label: "pending", value: "0", detail: "need host approval" },
-          { label: "check-ins", value: "0", detail: "guests at the room" },
-        ];
+  const summaryItems = [
+    `${realEvents.length} events`,
+    `${totalRsvps} RSVPs`,
+    `${lifecycleCounts.upcoming} upcoming`,
+    `${pendingApprovals} pending`,
+    `${checkedInGuests} check-ins`,
+  ];
   const headerList = await headers();
   const origin =
     headerList.get("x-forwarded-host") || headerList.get("host")
@@ -363,53 +274,13 @@ export default async function DashboardPage() {
     userResult.status === "ready" && userResult.dbUser
       ? dashboardChannel(userResult.dbUser.id)
       : null;
-  const profileIncomplete = Boolean(
-    userResult.status === "ready" &&
-      userResult.dbUser &&
-      (!userResult.dbUser.username || !userResult.dbUser.bio),
-  );
-  const now = new Date();
-  const nextEvent =
-    realEvents.find((event) => ["live", "upcoming"].includes(getDerivedEventStatus(event))) ??
-    realEvents[0];
-  const eventNeedingShare = realEvents.find((event) => event._count.rsvps === 0);
-  const eventNeedingInfo = realEvents.find((event) => event._count.infoBlocks === 0);
-  const eventWithin24Hours = realEvents.find((event) => {
-    const eventDay = new Date(event.eventDate);
-    const diff = eventDay.getTime() - now.getTime();
-
-    return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
-  });
-  const hostMoves = [
-    ...(realEvents.length === 0
-      ? [{ label: "Create your first invite", href: "/dashboard/events/new", active: true }]
-      : []),
-    ...(eventNeedingShare
-      ? [{ label: `Share invite link for ${eventNeedingShare.title}`, href: `/invite/${eventNeedingShare.slug}`, active: true }]
-      : []),
-    ...(pendingApprovals > 0 && nextEvent
-      ? [{ label: `Review ${pendingApprovals} pending approvals`, href: `/dashboard/events/${nextEvent.id}` }]
-      : []),
-    ...(eventWithin24Hours
-      ? [{ label: `Prepare check-in for ${eventWithin24Hours.title}`, href: `/dashboard/events/${eventWithin24Hours.id}/check-in` }]
-      : []),
-    ...(profileIncomplete ? [{ label: "Complete organizer profile", href: "/dashboard/profile" }] : []),
-    ...(eventNeedingInfo
-      ? [{ label: `Add venue note for ${eventNeedingInfo.title}`, href: `/dashboard/events/${eventNeedingInfo.id}/info-blocks` }]
-      : []),
-  ].slice(0, 4);
-  const featuredEvent = nextEvent;
-  const featuredGuests =
-    recentRsvps.length > 0
-      ? recentRsvps.slice(0, 4).map((rsvp) => rsvp.name.slice(0, 2).toUpperCase())
-      : ["GO", "RS", "VP"];
   const hostInitials = displayName.slice(0, 2).toUpperCase();
   const hostImageUrl = dbUser?.imageUrl ?? null;
 
   return (
-    <main className="dark-stage min-h-screen text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
+    <main className="dashboard-surface min-h-screen text-foreground">
+      <header className="bg-[#fff8ee]/64 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
           <Link href="/" className="min-w-0 text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
           <div className="flex shrink-0 items-center gap-2">
             <Link href="/discover" className="hidden text-sm font-black text-lime-mute sm:inline-flex">
@@ -422,45 +293,82 @@ export default async function DashboardPage() {
               Create event
             </Link>
             <UserButton />
-            <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <section className="mx-auto w-full max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="film-grain relative overflow-hidden rounded-[2.4rem] bg-[radial-gradient(circle_at_20%_10%,rgba(255,46,139,0.38),transparent_25%),linear-gradient(135deg,#111,#281326,#050505)] p-7 shadow-[0_24px_90px_rgba(0,0,0,0.48)] sm:p-10">
-          <div className="relative">
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
-              your events, your crowd, your city
-            </p>
-            <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
-              good evening, {displayName}.
+      <section className="mx-auto w-full max-w-7xl space-y-3.5 px-4 py-5 sm:px-6 lg:px-8">
+        {dashboardRealtimeChannel && (
+          <RealtimeRefresh
+            channels={[dashboardRealtimeChannel]}
+            enabled={Boolean(process.env.ABLY_API_KEY)}
+            showIndicator={false}
+            clerkUserId={userResult.clerkUser?.id}
+          />
+        )}
+
+        <div className="pb-1">
+          <div>
+            <h1 className="max-w-3xl text-[1.72rem] font-black lowercase leading-[1.05] text-zinc-950 sm:text-[2.35rem]">
+              Welcome back, {displayName}.
             </h1>
-            <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
-              Host the room, send the link, watch the guest list wake up.
+            <p className="mt-1.5 max-w-2xl text-sm font-semibold leading-6 text-zinc-600">
+              Manage your rooms, guests, and invites.
             </p>
-            {dashboardRealtimeChannel && (
-              <div className="mt-5">
-                <RealtimeRefresh
-                  channels={[dashboardRealtimeChannel]}
-                  enabled={Boolean(process.env.ABLY_API_KEY)}
-                  label="dashboard live"
-                  userId={userResult.clerkUser?.id}
-                />
-              </div>
-            )}
+            <p className="mt-2.5 flex flex-wrap gap-x-2 gap-y-1 text-[0.72rem] font-black uppercase tracking-[0.11em] text-zinc-500">
+              {summaryItems.map((item, index) => (
+                <span key={item}>
+                  {index > 0 && <span className="mr-2 text-zinc-300">/</span>}
+                  {item}
+                </span>
+              ))}
+            </p>
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {realStats.map((stat) => (
-            <article key={stat.label} className="theme-panel min-w-0 rounded-[1.5rem] border p-5">
-              <p className="theme-muted text-sm font-black uppercase tracking-[0.14em]">{stat.label}</p>
-              <p className="theme-heading mt-3 text-4xl font-black">{stat.value}</p>
-              <p className="mt-2 text-sm font-bold text-lime-mute">{stat.detail}</p>
-            </article>
-          ))}
-        </div>
+        <section className="space-y-2.5">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+            <form action="/dashboard" className="min-w-0 flex-1">
+              <input type="hidden" name="status" value={activeFilter === "hosting" ? "" : activeFilter} />
+              <label htmlFor="dashboard-search" className="sr-only">Search events</label>
+              <input
+                id="dashboard-search"
+                name="q"
+                defaultValue={searchQuery}
+                placeholder="Search events, city, venue"
+                className="focus-ring w-full rounded-full border border-zinc-950/10 bg-[#fffdf8]/68 px-4 py-2.5 text-sm font-bold text-zinc-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] placeholder:text-zinc-400"
+              />
+            </form>
+            <div className="scrollbar-none -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+              {(
+                [
+                  ["hosting", "Hosting"],
+                  ["upcoming", "Upcoming"],
+                  ["live", "Live"],
+                  ["past", "Past"],
+                  ["archived", "Archived"],
+                ] as const
+              ).map(([status, label]) => {
+                const active = activeFilter === status;
+
+                return (
+                  <Link
+                    key={status}
+                    href={dashboardFilterHref(status, searchQuery)}
+                    className={[
+                      "focus-ring shrink-0 rounded-full px-3.5 py-1.5 text-[0.82rem] font-black transition",
+                      active
+                        ? "border border-lime-500/25 bg-lime-mute/80 text-zinc-950 shadow-[0_8px_24px_rgba(198,255,69,0.16)]"
+                        : "border border-zinc-950/10 bg-[#fffdf8]/58 text-zinc-700 hover:bg-[#fffdf8]/86",
+                    ].join(" ")}
+                  >
+                    {label} {lifecycleCounts[status]}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
         {userResult.status === "database-not-configured" && (
           <section className="theme-panel rounded-[1.5rem] border p-5">
@@ -497,53 +405,80 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-6">
+        <div className="min-w-0 space-y-6">
             <section className="min-w-0">
-              <div className="mb-4 flex min-w-0 flex-col items-start justify-between gap-2 sm:flex-row sm:items-end sm:gap-4">
-                <h2 className="theme-heading min-w-0 text-4xl font-black lowercase">upcoming events</h2>
-                <Link href="/dashboard/events/new" className="shrink-0 text-sm font-black text-lime-mute">create invite</Link>
+              <div className="mb-4">
+                <div>
+                  <h2 className="theme-heading min-w-0 text-3xl font-black lowercase sm:text-4xl">events</h2>
+                  <p className="theme-muted mt-1 text-sm font-semibold">
+                    {filteredEvents.length} shown from {realEvents.length} hosted rooms
+                  </p>
+                </div>
               </div>
 
               {userResult.status === "ready" && realEvents.length === 0 ? (
-                <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
-                    no gatherings yet
-                  </p>
-                  <h3 className="theme-heading mt-3 text-4xl font-black lowercase">
-                    create your first invite
-                  </h3>
-                  <p className="theme-muted mt-3 max-w-xl font-semibold leading-7">
-                    Start with a poster, save the details, and Sama will give you
-                    a public invite link to share.
-                  </p>
+                <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                   <Link
                     href="/dashboard/events/new"
-                    className="focus-ring theme-action mt-5 inline-flex rounded-full px-5 py-3 font-black"
+                    className="focus-ring group flex min-w-0 flex-col overflow-hidden rounded-[1.25rem] border border-dashed border-zinc-950/14 bg-[#fff6ec]/20 p-1.5 text-center shadow-[0_10px_28px_rgba(77,23,52,0.05)] transition hover:-translate-y-0.5 hover:border-plum/28 hover:bg-[#fff6ec]/36 hover:shadow-[0_18px_46px_rgba(77,23,52,0.09)]"
                   >
-                    Create your first invite
+                    <span className="grid aspect-square place-items-center rounded-[1rem] bg-[radial-gradient(circle_at_22%_20%,rgba(255,46,139,0.18),transparent_32%),radial-gradient(circle_at_82%_12%,rgba(198,255,69,0.22),transparent_26%),linear-gradient(135deg,#fff0dc,#f4c8dc_48%,#dfd2ff)] transition group-hover:saturate-[1.06]">
+                      <span className="grid size-10 place-items-center rounded-full bg-plum text-xl font-black text-ivory shadow-[0_12px_28px_rgba(77,23,52,0.22)] transition group-hover:scale-105">
+                        +
+                      </span>
+                    </span>
+                    <span className="px-1.5 pb-1 pt-2.5">
+                      <span className="mt-3 block text-lg font-black lowercase text-zinc-950">New event</span>
+                      <span className="mt-1 block text-xs font-semibold text-zinc-600">Start your first room.</span>
+                    </span>
                   </Link>
                 </div>
               ) : userResult.status === "ready" ? (
-                <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                  {realEvents.map((event) => {
+                <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                  <Link
+                    href="/dashboard/events/new"
+                    className="focus-ring group flex min-w-0 flex-col overflow-hidden rounded-[1.25rem] border border-dashed border-zinc-950/14 bg-[#fff6ec]/20 p-1.5 text-center shadow-[0_10px_28px_rgba(77,23,52,0.05)] transition hover:-translate-y-0.5 hover:border-plum/28 hover:bg-[#fff6ec]/36 hover:shadow-[0_18px_46px_rgba(77,23,52,0.09)]"
+                  >
+                    <span className="grid aspect-square place-items-center rounded-[1rem] bg-[radial-gradient(circle_at_22%_20%,rgba(255,46,139,0.18),transparent_32%),radial-gradient(circle_at_82%_12%,rgba(198,255,69,0.22),transparent_26%),linear-gradient(135deg,#fff0dc,#f4c8dc_48%,#dfd2ff)] transition group-hover:saturate-[1.06]">
+                      <span className="grid size-10 place-items-center rounded-full bg-plum text-xl font-black text-ivory shadow-[0_12px_28px_rgba(77,23,52,0.22)] transition group-hover:scale-105">
+                        +
+                      </span>
+                    </span>
+                    <span className="px-1.5 pb-1 pt-2.5">
+                      <span className="mt-3 block text-lg font-black lowercase text-zinc-950">New event</span>
+                      <span className="mt-1 block text-xs font-semibold text-zinc-600">Design another invite.</span>
+                    </span>
+                  </Link>
+                  {filteredEvents.length === 0 && (
+                    <div className="rounded-[1.5rem] border border-zinc-950/10 bg-white/62 p-5">
+                      <h3 className="text-2xl font-black lowercase text-zinc-950">No matching events</h3>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-zinc-600">
+                        Adjust search or switch filters to see more rooms.
+                      </p>
+                    </div>
+                  )}
+                  {filteredEvents.map((event) => {
                     const inviteUrl = `${origin}/invite/${event.slug}`;
+                    const manageHref = `/dashboard/events/${event.id}`;
                     const designStyles = getCardDesignStyles(event.cardDesign);
                     const lifecycleStatus = getDerivedEventStatus(event);
-                    const lifecycleLabel = getEventLifecycleLabel(event);
-                    const eventPendingApprovals = rsvpCountFor(
-                      event.id,
-                      (group) => group.approvalStatus === "PENDING",
-                    );
-                    const eventCheckedIn = rsvpCountFor(event.id, (group) => group.checkedIn);
+                    const cardStateClass =
+                      lifecycleStatus === "archived" || lifecycleStatus === "cancelled"
+                        ? "opacity-90"
+                        : "";
 
                     return (
                       <article
                         key={event.id}
-                        className={`theme-panel tilt-card min-w-0 overflow-hidden border ${designStyles.cornerClass}`}
+                        className={`tilt-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden border border-zinc-950/5 bg-[#fff6ec]/28 p-1.5 shadow-[0_10px_28px_rgba(77,23,52,0.06)] transition hover:border-plum/18 hover:bg-[#fff6ec]/44 hover:shadow-[0_18px_46px_rgba(77,23,52,0.10)] ${designStyles.cornerClass} ${cardStateClass}`}
                         style={designStyles.style}
                       >
-                        <div className="film-grain relative min-h-44 bg-gradient-to-br from-fuchsia-950 via-rose-600 to-lime-mute p-5">
+                        <Link
+                          href={manageHref}
+                          aria-label={`Open ${event.title} management`}
+                          className="focus-ring absolute inset-0 z-10 rounded-[inherit]"
+                        />
+                        <div className="film-grain relative aspect-square overflow-hidden rounded-[1rem] bg-[radial-gradient(circle_at_20%_14%,rgba(255,46,139,0.26),transparent_28%),radial-gradient(circle_at_82%_16%,rgba(198,255,69,0.18),transparent_24%),radial-gradient(circle_at_72%_86%,rgba(204,184,255,0.34),transparent_30%),linear-gradient(135deg,#ffd8c2_0%,#f4c8dc_46%,#d9d1ff_100%)] p-3 transition group-hover:saturate-[1.06]">
                           {event.coverImage && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -554,78 +489,37 @@ export default async function DashboardPage() {
                           )}
                           <div className={`absolute inset-0 ${designStyles.overlayClass}`} />
                           {designStyles.textureClass && <div className={`absolute inset-0 ${designStyles.textureClass}`} />}
-                          <span className={`relative z-10 ${designStyles.badgeClass} text-zinc-950`} style={designStyles.accentBackgroundStyle}>
-                            {event.category || event.theme}
+                          {!event.coverImage && (
+                            <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.32)_1px,transparent_1px)] bg-[length:17px_17px] opacity-25" />
+                          )}
+                          <span className="absolute left-3 top-3 z-10 max-w-[72%] truncate rounded-full bg-white/86 px-2.5 py-1 text-[0.68rem] font-black text-zinc-950 shadow-[0_8px_20px_rgba(0,0,0,0.10)] backdrop-blur">
+                            {formatDateTimeLabel(event.eventDate, event.eventTime)}
                           </span>
-                          <span
-                            className={[
-                              "absolute left-5 top-14 z-10 rounded-full px-3 py-1 text-xs font-black",
-                              lifecycleStatus === "live"
-                                ? "bg-lime-mute text-zinc-950"
-                                : lifecycleStatus === "ended"
-                                  ? "bg-white/14 text-zinc-200"
-                                  : lifecycleStatus === "cancelled"
-                                    ? "bg-rose-neon text-white"
-                                    : lifecycleStatus === "archived"
-                                      ? "bg-zinc-700 text-zinc-200"
-                                      : "bg-black/55 text-lime-200",
-                            ].join(" ")}
-                          >
-                            {lifecycleLabel}
-                          </span>
-                          <span className="absolute right-5 top-5 z-10 grid size-9 place-items-center overflow-hidden rounded-full border border-white/20 bg-ivory text-xs font-black text-zinc-950">
-                            {hostImageUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={hostImageUrl}
-                                alt={`${displayName} profile photo`}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              hostInitials
-                            )}
-                          </span>
-                          <h3 className={`absolute bottom-5 left-5 right-5 text-3xl lowercase leading-none ${designStyles.fontClass}`} style={designStyles.titleStyle}>
+                          <div className="absolute right-3 top-3 z-20">
+                            <DashboardEventCardMenu inviteUrl={inviteUrl} manageHref={manageHref} />
+                          </div>
+                        </div>
+                        <div className="relative z-0 flex flex-1 flex-col px-1.5 pb-1 pt-2.5">
+                          <h3 className="line-clamp-1 text-lg font-black lowercase leading-[1.02] text-zinc-950">
                             {event.title}
                           </h3>
-                        </div>
-                        <div className="space-y-4 p-5">
-                          <p className="theme-heading text-sm font-black">
-                            {formatDateTimeLabel(event.eventDate, event.eventTime)}
-                          </p>
-                          <p className="theme-muted text-sm font-semibold">
-                            {event.city ? `${event.city} - ` : ""}
-                            {event.location}
-                          </p>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-lime-mute">
-                              {event._count.rsvps} RSVPs
+                          <div className="mt-2 flex min-w-0 items-center gap-2">
+                            <span className="grid size-6 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-950/10 bg-ivory text-[0.6rem] font-black text-zinc-950">
+                              {hostImageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={hostImageUrl}
+                                  alt={`${displayName} profile photo`}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                hostInitials
+                              )}
                             </span>
-                            {eventPendingApprovals > 0 && (
-                              <span className="rounded-full bg-saffron-200 px-3 py-1.5 text-xs font-black text-zinc-950">
-                                {eventPendingApprovals} pending
-                              </span>
-                            )}
-                            <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-white">
-                              {eventCheckedIn} checked in
-                            </span>
-                            <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-rose-neon">
-                              {event.visibility}
-                            </span>
-                            {event.datePolls.length > 0 && (
-                              <span className="rounded-full bg-black/35 px-3 py-1.5 text-xs font-black text-white">
-                                poll active
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <CopyLinkButton value={inviteUrl} />
-                            <Link
-                              href={`/dashboard/events/${event.id}`}
-                              className="focus-ring theme-action rounded-full px-4 py-2 text-sm font-black"
-                            >
-                              Manage
-                            </Link>
+                            <p className="min-w-0 truncate text-xs font-semibold text-zinc-500">
+                              Hosted by{" "}
+                              <span className="font-black text-zinc-800">{displayName}</span>
+                            </p>
                           </div>
                         </div>
                       </article>
@@ -646,118 +540,7 @@ export default async function DashboardPage() {
                 </div>
               )}
             </section>
-
-            <section className="min-w-0">
-              <div className="mb-4">
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
-                  today&apos;s pulse
-                </p>
-                <h2 className="theme-heading mt-2 text-4xl font-black lowercase">live room signals</h2>
-              </div>
-              <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-4">
-                <PulseCard label="new RSVPs today" value={String(dashboardData.newRsvpsToday)} accent="lime" />
-                <PulseCard label="interested guests" value={String(dashboardData.interestedGuests)} accent="rose" />
-                <PulseCard label="pending approvals" value={String(pendingApprovals)} accent="blue" />
-                <PulseCard label="total RSVPs" value={String(totalRsvps)} accent="saffron" />
-              </div>
-            </section>
-
-            <section className="grid min-w-0 gap-4 lg:grid-cols-2">
-              <MomentumCard momentum={momentum} />
-              <div className="grid min-w-0 gap-4">
-                <HostChecklist moves={hostMoves} />
-                <RecentRsvps rsvps={recentRsvps} />
-              </div>
-            </section>
-
-            {featuredEvent && (
-              <section className="min-w-0">
-                <div className="mb-4">
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
-                    featured invite preview
-                  </p>
-                  <h2 className="theme-heading mt-2 text-4xl font-black lowercase">
-                    tonight&apos;s room card
-                  </h2>
-                </div>
-                <AnimatedInviteCard
-                  title={featuredEvent.title}
-                  date={formatEventDateShort(featuredEvent.eventDate)}
-                  time={featuredEvent.eventTime}
-                  host={displayName}
-                  location={featuredEvent.location}
-                  description="A compact preview of the invite your guests will open and share."
-                  guests={featuredGuests}
-                  theme={getEventTheme(featuredEvent.theme).inviteTheme}
-                  coverImage={featuredEvent.coverImage}
-                  cardDesign={featuredEvent.cardDesign}
-                  compact
-                />
-              </section>
-            )}
-          </div>
-
-          <aside className="scrollbar-none min-w-0 space-y-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:pb-2">
-            {profileIncomplete && <ProfileCompletionCard />}
-
-            <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">quick actions</p>
-              <div className="mt-4 grid gap-3">
-                <Link href="/dashboard/events/new" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
-                  Create invite
-                </Link>
-                <Link href="/discover" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
-                  View public discover
-                </Link>
-                <Link href="/dashboard/profile" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
-                  Edit organizer profile
-                </Link>
-                <Link href="/dashboard/guests" className="focus-ring rounded-2xl bg-black/35 px-4 py-4 text-left font-black text-white hover:bg-white/10">
-                  Open guest list
-                </Link>
-              </div>
-            </section>
-            <section className="theme-panel min-w-0 rounded-[2rem] border p-5">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">activity feed</p>
-              <div className="mt-4 space-y-3">
-                {latestActivity.length
-                  ? latestActivity.map((item) => (
-                      <p key={item.id} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
-                        {item.message} <span className="text-zinc-500">- {item.eventTitle}</span>
-                      </p>
-                    ))
-                  : (
-                      <div className="rounded-2xl bg-black/35 px-4 py-5">
-                        <h3 className="theme-heading text-xl font-black lowercase">no activity yet</h3>
-                        <p className="theme-muted mt-2 text-sm font-semibold leading-6">
-                          RSVP updates and host actions will appear here when they are recorded.
-                        </p>
-                      </div>
-                    )}
-              </div>
-            </section>
-          </aside>
         </div>
-
-        <section className="min-w-0 rounded-[2rem] border border-white/10 bg-lime-mute p-6 text-zinc-950 shadow-[0_24px_80px_rgba(198,255,69,0.16)] sm:p-8">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-sm font-black uppercase tracking-[0.18em]">invite links</p>
-              <h3 className="mt-3 text-4xl font-black lowercase leading-none sm:text-5xl">
-                one link, whole room.
-              </h3>
-              <p className="mt-3 max-w-2xl text-sm font-bold sm:text-base">
-                Share on WhatsApp, stories, or the group chat. Every guest opens the same live room.
-              </p>
-            </div>
-            <Link
-              href="/dashboard/invite-tools"
-              className="focus-ring w-fit rounded-full bg-zinc-950 px-5 py-3 text-sm font-black text-lime-mute transition hover:-translate-y-0.5"
-            >
-              Open invite tools
-            </Link>
-          </div>
-        </section>
       </section>
     </main>
   );

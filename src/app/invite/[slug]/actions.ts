@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import type { ApprovalStatus, RSVPStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
@@ -17,6 +18,7 @@ import {
 import { publishEventUpdate } from "@/lib/realtime/ably-server";
 import { dashboardChannel, eventChannel, inviteChannel } from "@/lib/realtime/events";
 import { canGuestsRsvp, canGuestsVotePoll } from "@/lib/event-lifecycle";
+import { rsvpAccessCookieName } from "@/lib/rsvp-access";
 
 function statusMessage(name: string, status: RSVPStatus, approvalStatus: ApprovalStatus) {
   if (approvalStatus === "PENDING") {
@@ -240,6 +242,14 @@ export async function submitRsvpAction(
       });
     }
   }
+
+  (await cookies()).set(rsvpAccessCookieName(event.id), rsvp.id, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 180,
+  });
 
   revalidatePath(`/invite/${event.slug}`);
   revalidatePath(`/dashboard/events/${event.id}`);

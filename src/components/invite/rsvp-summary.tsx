@@ -20,7 +20,7 @@ export function RsvpSummary({ going, maybe, notGoing, capacity }: RsvpSummaryPro
           ["Maybe", maybe],
           ["Can't go", notGoing],
         ].map(([label, value]) => (
-          <article key={label} className="rounded-2xl bg-black/35 px-4 py-4">
+          <article key={label} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-4">
             <p className="text-xs font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">
               {label}
             </p>
@@ -34,7 +34,7 @@ export function RsvpSummary({ going, maybe, notGoing, capacity }: RsvpSummaryPro
             <span>capacity</span>
             <span>{capacityLabel}</span>
           </div>
-          <div className="mt-2 h-3 overflow-hidden rounded-full bg-black/35">
+          <div className="mt-2 h-3 overflow-hidden rounded-full border border-zinc-950/10 bg-white/58">
             <div
               className="h-full rounded-full bg-gradient-to-r from-rose-neon to-lime-mute"
               style={{ width: `${progress}%` }}

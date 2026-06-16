@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default function MemoriesPage() {
   const tiles = [
@@ -14,13 +13,12 @@ export default function MemoriesPage() {
   ];
 
   return (
-    <main className="dark-stage min-h-screen text-foreground">
+    <main className="app-surface min-h-screen text-foreground">
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-3">
           <Link href="/invite/demo" className="focus-ring inline-flex rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]">
             Back to invite
           </Link>
-          <ThemeToggle />
         </div>
 
         <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -37,13 +35,13 @@ export default function MemoriesPage() {
             <button type="button" className="focus-ring rounded-full bg-lime-mute px-5 py-3 font-black text-zinc-950">
               Add photos
             </button>
-            <button type="button" className="focus-ring rounded-full bg-white/8 px-5 py-3 font-black text-white">
+            <button type="button" className="focus-ring rounded-full border border-zinc-950/10 bg-white/58 px-5 py-3 font-black text-zinc-950">
               Share memories
             </button>
           </div>
         </div>
 
-        <div className="relative mt-8 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] p-3">
+        <div className="relative mt-8 overflow-hidden rounded-[2rem] border border-zinc-950/10 bg-white/58 p-3">
           <div className="liquid-gradient absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,46,139,0.2),transparent_24%),radial-gradient(circle_at_78%_70%,rgba(249,217,130,0.18),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))]" />
           <div className="relative z-10 grid auto-rows-[11rem] grid-cols-2 gap-3 sm:grid-cols-4">
             {tiles.map(([gradient, caption], index) => (
@@ -53,7 +51,7 @@ export default function MemoriesPage() {
                 aria-label={`Memory placeholder ${index + 1}`}
               >
                 <span
-                  className="animate-float absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1.5 text-xs font-black text-white backdrop-blur"
+                  className="animate-float absolute bottom-3 left-3 rounded-full bg-white/72 px-3 py-1.5 text-xs font-black text-zinc-950 backdrop-blur"
                   style={{ animationDelay: `${index * 120}ms` }}
                 >
                   {caption}

@@ -6,7 +6,6 @@ import { CityCard } from "@/components/discovery/city-card";
 import { DiscoverSection } from "@/components/discovery/discover-section";
 import { EventRow } from "@/components/discovery/event-row";
 import { HeroDiscover } from "@/components/discovery/hero-discover";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { getApprovedGoingCount } from "@/lib/discover";
 import { categories, cities, eventRows, moreCities } from "@/lib/mock-data";
@@ -81,8 +80,8 @@ export default async function Home() {
     .slice(0, 5);
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="min-h-screen overflow-x-hidden app-surface text-foreground">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border)] app-surface/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase tracking-tight text-[color:var(--foreground)]">
             Sama
@@ -121,7 +120,6 @@ export default async function Home() {
                 </Link>
               </>
             )}
-            <ThemeToggle />
             <button type="button" aria-label="Help" className="focus-ring hidden size-10 place-items-center rounded-full bg-[color:var(--card)] text-sm font-black text-[color:var(--foreground)] sm:grid">
               ?
             </button>
@@ -207,16 +205,16 @@ export default async function Home() {
       </section>
 
       <section id="host" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="film-grain relative overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-zinc-900 via-fuchsia-950 to-black p-7 shadow-[0_24px_90px_rgba(0,0,0,0.48)] sm:p-10">
+        <div className="film-grain relative overflow-hidden rounded-[2.25rem] border border-zinc-950/10 bg-[radial-gradient(circle_at_18%_16%,rgba(255,46,139,0.18),transparent_26%),radial-gradient(circle_at_82%_18%,rgba(198,255,69,0.2),transparent_22%),linear-gradient(135deg,#fff4df,#f8d7e5_52%,#eee0ff)] p-7 shadow-[0_24px_90px_rgba(77,23,52,0.14)] sm:p-10">
           <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
                 not another registration form
               </p>
-              <h2 className="mt-3 max-w-3xl text-5xl font-black lowercase leading-none text-white">
+              <h2 className="mt-3 max-w-3xl text-5xl font-black lowercase leading-none text-zinc-950">
                 host the room. send the link.
               </h2>
-              <p className="mt-4 max-w-xl text-lg font-semibold leading-8 text-zinc-300">
+              <p className="mt-4 max-w-xl text-lg font-semibold leading-8 text-zinc-700">
                 Discover gatherings, host beautiful events, collect RSVPs, and bring your people together.
               </p>
             </div>

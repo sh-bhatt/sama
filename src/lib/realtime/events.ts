@@ -48,8 +48,8 @@ export function eventChannel(eventId: string) {
   return `event:${eventId}`;
 }
 
-export function dashboardChannel(userId: string) {
-  return `dashboard:${userId}`;
+export function dashboardChannel(dbUserId: string) {
+  return `dashboard:${dbUserId}`;
 }
 
 export function inviteChannel(slug: string) {

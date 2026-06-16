@@ -89,7 +89,7 @@ function OptionGroup<Key extends keyof CardDesign>({
                 "focus-ring rounded-full px-3 py-2 text-xs font-black transition hover:-translate-y-0.5",
                 selected
                   ? "bg-lime-mute text-zinc-950"
-                  : "bg-black/35 text-[color:var(--foreground)] hover:bg-black/50",
+                  : "border border-zinc-950/10 bg-white/58 text-[color:var(--foreground)] hover:bg-white/80",
               )}
             >
               {optionLabel(String(option))}

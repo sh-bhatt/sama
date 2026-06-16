@@ -29,7 +29,7 @@ export function DiscoverEventCard({
   const lifecycleStatus = getDerivedEventStatus(event);
   const lifecycleLabel = getEventLifecycleLabel(event);
   const hostAvatar = (
-    <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-white/20 bg-ivory text-xs font-black text-zinc-950 shadow-[0_10px_28px_rgba(0,0,0,0.28)]">
+    <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full border border-zinc-950/10 bg-ivory text-xs font-black text-zinc-950 shadow-[0_10px_28px_rgba(77,23,52,0.16)]">
       {event.host.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -49,7 +49,7 @@ export function DiscoverEventCard({
         <span className="block text-xs font-black uppercase tracking-[0.14em] text-zinc-500">
           hosted by
         </span>
-        <span className="block truncate text-sm font-black text-lime-200">
+        <span className="block truncate text-sm font-black text-zinc-950">
           {hostLabel}
         </span>
       </span>
@@ -59,7 +59,7 @@ export function DiscoverEventCard({
   return (
     <article
       className={cn(
-        "tilt-card group relative min-w-0 shrink-0 overflow-hidden border border-white/10 bg-zinc-900 shadow-[0_22px_70px_rgba(0,0,0,0.38)]",
+        "tilt-card group relative min-w-0 shrink-0 overflow-hidden border border-zinc-950/10 bg-white/78 shadow-[0_22px_70px_rgba(77,23,52,0.16)] backdrop-blur",
         designStyles.cornerClass,
         wide ? "w-[min(86vw,24rem)]" : "w-[min(82vw,20rem)]",
       )}
@@ -95,14 +95,14 @@ export function DiscoverEventCard({
                 lifecycleStatus === "live"
                   ? "bg-lime-mute text-zinc-950"
                   : lifecycleStatus === "ended"
-                    ? "bg-white/14 text-zinc-200"
-                    : "bg-black/55 text-lime-200 backdrop-blur",
+                    ? "bg-white/72 text-zinc-700"
+                    : "bg-white/72 text-zinc-950 backdrop-blur",
               )}
             >
               {lifecycleLabel}
             </span>
             {event.requiresApproval && (
-              <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-black text-lime-200 backdrop-blur">
+              <span className="rounded-full bg-white/72 px-3 py-1 text-xs font-black text-zinc-950 backdrop-blur">
                 approval
               </span>
             )}
@@ -121,30 +121,30 @@ export function DiscoverEventCard({
         </div>
       </Link>
       <div className="space-y-3 p-4">
-        <p className="text-sm font-bold text-zinc-200">
+        <p className="text-sm font-bold text-zinc-900">
           {formatDateTimeLabel(event.eventDate, event.eventTime)}
         </p>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-600">
           {event.city || "India"} - {event.location}
         </p>
         {organizerHref ? (
           <Link
             href={organizerHref}
-            className="focus-ring flex min-w-0 items-center gap-2 rounded-2xl bg-white/6 px-3 py-2 transition hover:bg-white/10"
+            className="focus-ring flex min-w-0 items-center gap-2 rounded-2xl border border-zinc-950/10 bg-white/58 px-3 py-2 transition hover:bg-white/80"
           >
             {hostLinkContent}
           </Link>
         ) : (
-          <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-white/6 px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-zinc-950/10 bg-white/58 px-3 py-2">
             {hostLinkContent}
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-lime-200">
+          <span className="rounded-full border border-lime-600/20 bg-lime-200/70 px-3 py-1.5 text-xs font-black text-zinc-950">
             {goingCount}
             {event.capacity ? `/${event.capacity}` : ""} going
           </span>
-          <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-zinc-200">
+          <span className="rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1.5 text-xs font-black text-zinc-700">
             {interestedCount} interested
           </span>
         </div>
@@ -152,7 +152,7 @@ export function DiscoverEventCard({
           <InterestButton eventId={event.id} initialCount={interestedCount} compact />
           <Link
             href={`/invite/${event.slug}`}
-            className="focus-ring rounded-full bg-white/8 px-3 py-2 text-xs font-black text-white transition hover:-translate-y-0.5 hover:bg-white/12"
+            className="focus-ring rounded-full bg-lime-mute px-3 py-2 text-xs font-black text-zinc-950 transition hover:-translate-y-0.5 hover:brightness-105"
           >
             RSVP
           </Link>

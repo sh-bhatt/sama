@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { OrganizerEventCard } from "@/components/profile/organizer-event-card";
 import { OrganizerHero } from "@/components/profile/organizer-hero";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isDatabaseConfigured } from "@/lib/auth/config";
 import { normalizeUsername } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
@@ -27,7 +26,7 @@ function SetupState({
   body: string;
 }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -171,8 +170,8 @@ export default async function OrganizerPage({ params }: OrganizerPageProps) {
   ]);
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] app-surface/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -181,7 +180,6 @@ export default async function OrganizerPage({ params }: OrganizerPageProps) {
             <Link href="/discover" className="text-sm font-black text-lime-mute">
               Discover
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>

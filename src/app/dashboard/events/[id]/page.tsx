@@ -15,7 +15,6 @@ import { MemoriesManagementCard } from "@/components/dashboard/memories-manageme
 import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
 import { ShareWhatsAppButton } from "@/components/share-whatsapp-button";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   archiveEventAction,
   cancelEventAction,
@@ -50,7 +49,7 @@ function SetupMessage({
   body: string;
 }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -311,8 +310,8 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
     : null;
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -324,7 +323,6 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">
               Dashboard
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -360,7 +358,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                   ]}
                   enabled={Boolean(process.env.ABLY_API_KEY)}
                   label="room live"
-                  userId={currentUser.clerkUser?.id}
+                  clerkUserId={currentUser.clerkUser?.id}
                 />
               </div>
             </div>
@@ -397,7 +395,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 {lifecycleStatus !== "cancelled" && lifecycleStatus !== "archived" && lifecycleStatus !== "ended" && (
                   <form action={cancelEventAction}>
                     <input type="hidden" name="eventId" value={event.id} />
-                    <button type="submit" className="focus-ring rounded-full bg-rose-neon px-4 py-2 text-sm font-black text-white">
+                    <button type="submit" className="focus-ring rounded-full bg-rose-neon px-4 py-2 text-sm font-black text-zinc-950">
                       Cancel
                     </button>
                   </form>
@@ -405,7 +403,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 {lifecycleStatus !== "archived" && (
                   <form action={archiveEventAction}>
                     <input type="hidden" name="eventId" value={event.id} />
-                    <button type="submit" className="focus-ring rounded-full bg-zinc-800 px-4 py-2 text-sm font-black text-zinc-100">
+                    <button type="submit" className="focus-ring rounded-full bg-zinc-200 px-4 py-2 text-sm font-black text-zinc-700">
                       Archive
                     </button>
                   </form>
@@ -450,7 +448,7 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 ["approval", event.requiresApproval ? "Required" : "Open"],
                 ["waitlist", event.waitlistEnabled ? "Enabled" : "Off"],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl bg-black/35 px-4 py-3">
+                <div key={label} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-[color:var(--muted)]">
                     {label}
                   </p>
@@ -500,9 +498,9 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
                 ["Can't go", notGoingCount],
                 ["Checked in", checkedInCount],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl bg-black/35 px-4 py-4">
+                <div key={label} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-4">
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-zinc-500">{label}</p>
-                  <p className="mt-2 text-3xl font-black text-white">{value}</p>
+                  <p className="mt-2 text-3xl font-black text-zinc-950">{value}</p>
                 </div>
               ))}
             </div>
@@ -566,12 +564,12 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
               </div>
               <div className="mt-4 space-y-2">
                 {event.infoBlocks.slice(0, 3).map((block) => (
-                  <p key={block.id} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                  <p key={block.id} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-bold text-zinc-700">
                     {block.title}
                   </p>
                 ))}
                 {!event.infoBlocks.length && (
-                  <p className="theme-muted rounded-2xl bg-black/35 px-4 py-3 text-sm font-semibold">
+                  <p className="theme-muted rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-semibold">
                     Add dress code, parking, links, or FAQs.
                   </p>
                 )}
@@ -597,12 +595,12 @@ export default async function ManageEventPage({ params }: ManageEventPageProps) 
               </div>
               <div className="mt-4 space-y-2">
                 {event.rsvpQuestions.slice(0, 3).map((question) => (
-                  <p key={question.id} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                  <p key={question.id} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-bold text-zinc-700">
                     {question.question}
                   </p>
                 ))}
                 {!event.rsvpQuestions.length && (
-                  <p className="theme-muted rounded-2xl bg-black/35 px-4 py-3 text-sm font-semibold">
+                  <p className="theme-muted rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-semibold">
                     Ask for song requests, food notes, or any custom detail.
                   </p>
                 )}

@@ -47,8 +47,8 @@ export function PublicDatePoll({ slug, pollId, question, options }: PublicDatePo
   }, [router, state.status, state.message]);
 
   return (
-    <section className="border-t border-zinc-950/10 pt-6 dark:border-white/10">
-      <h2 className="text-3xl font-black lowercase text-zinc-950 dark:text-white">{question}</h2>
+    <section className="border-t border-zinc-950/10 pt-6">
+      <h2 className="text-3xl font-black lowercase text-zinc-950">{question}</h2>
       <form action={formAction} className="mt-5 space-y-4">
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="pollId" value={pollId} />
@@ -69,7 +69,7 @@ export function PublicDatePoll({ slug, pollId, question, options }: PublicDatePo
                   "focus-ring rounded-2xl border px-4 py-4 text-left transition hover:-translate-y-0.5",
                   active
                     ? "border-lime-mute bg-lime-mute text-zinc-950"
-                    : "border-zinc-950/10 bg-white/34 text-zinc-950 backdrop-blur dark:border-white/10 dark:bg-white/[0.06] dark:text-white",
+                    : "border-zinc-950/10 bg-white/34 text-zinc-950 backdrop-blur",
                 ].join(" ")}
               >
                 <span className="block text-sm font-black">
@@ -87,21 +87,21 @@ export function PublicDatePoll({ slug, pollId, question, options }: PublicDatePo
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label>
-            <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Name</span>
+            <span className="text-sm font-black text-zinc-700">Name</span>
             <input
               name="guestName"
               required
               minLength={2}
               placeholder="Your name"
-              className="focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/40 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
+              className="focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/40 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500"
             />
           </label>
           <label>
-            <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Phone optional</span>
+            <span className="text-sm font-black text-zinc-700">Phone optional</span>
             <input
               name="guestPhone"
               placeholder="+91, to update later"
-              className="focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/40 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
+              className="focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/40 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500"
             />
           </label>
         </div>

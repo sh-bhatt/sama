@@ -19,7 +19,7 @@ export function MemoryCard({ memory, eventTitle, large = false, children }: Memo
 
   return (
     <article
-      className={`tilt-card film-grain group relative min-w-0 overflow-hidden rounded-[1.6rem] border border-white/10 bg-black/35 shadow-[0_24px_80px_rgba(0,0,0,0.38)] ${
+      className={`tilt-card film-grain group relative min-w-0 overflow-hidden rounded-[1.6rem] border border-zinc-950/10 bg-white/58 shadow-[0_24px_80px_rgba(77,23,52,0.16)] ${
         large ? "sm:col-span-2 sm:row-span-2" : ""
       }`}
     >
@@ -35,7 +35,7 @@ export function MemoryCard({ memory, eventTitle, large = false, children }: Memo
       />
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/86 via-black/45 to-transparent p-4">
         {memory.caption && (
-          <p className="max-w-full text-sm font-black text-white">{memory.caption}</p>
+          <p className="max-w-full text-sm font-black text-zinc-950">{memory.caption}</p>
         )}
         {displayName && (
           <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-lime-mute">

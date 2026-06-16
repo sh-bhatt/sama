@@ -5,7 +5,6 @@ import { deleteDatePollAction } from "@/app/dashboard/events/[id]/date-poll/acti
 import { DatePollForm } from "@/components/polls/date-poll-form";
 import { PollResults } from "@/components/polls/poll-results";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { formatEventDate } from "@/lib/date";
@@ -29,7 +28,7 @@ function SetupMessage({
   body: string;
 }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -117,8 +116,8 @@ export default async function DatePollPage({ params, searchParams }: DatePollPag
   );
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -127,7 +126,6 @@ export default async function DatePollPage({ params, searchParams }: DatePollPag
             <Link href={`/dashboard/events/${event.id}`} className="text-sm font-black text-lime-mute">
               Manage
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -138,10 +136,10 @@ export default async function DatePollPage({ params, searchParams }: DatePollPag
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
               plan the night
             </p>
-            <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
+            <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-zinc-950 sm:text-7xl">
               date poll for {event.title}
             </h1>
-            <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
+            <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700">
               {formatEventDate(event.eventDate)} - {event.eventTime} - {event.location}
             </p>
             <div className="mt-5">
@@ -149,7 +147,7 @@ export default async function DatePollPage({ params, searchParams }: DatePollPag
                 channels={[eventChannel(event.id)]}
                 enabled={Boolean(process.env.ABLY_API_KEY)}
                 label="poll live"
-                userId={currentUser.clerkUser?.id}
+                clerkUserId={currentUser.clerkUser?.id}
               />
             </div>
           </section>

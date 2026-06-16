@@ -24,7 +24,7 @@ export function OrganizerHero({
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <section className="film-grain relative overflow-hidden rounded-[2.4rem] bg-[radial-gradient(circle_at_20%_12%,rgba(255,46,139,0.4),transparent_25%),radial-gradient(circle_at_82%_16%,rgba(198,255,69,0.22),transparent_20%),linear-gradient(135deg,#080808,#261225,#050505)] p-7 shadow-[0_24px_90px_rgba(0,0,0,0.48)] sm:p-10">
+    <section className="film-grain relative overflow-hidden rounded-[2.4rem] border border-zinc-950/10 bg-[radial-gradient(circle_at_20%_12%,rgba(255,46,139,0.22),transparent_25%),radial-gradient(circle_at_82%_16%,rgba(198,255,69,0.2),transparent_20%),linear-gradient(135deg,#fff4df,#f8d7e5_52%,#eee0ff)] p-7 shadow-[0_24px_90px_rgba(77,23,52,0.14)] sm:p-10">
       <div className="relative grid gap-6 md:grid-cols-[auto_minmax(0,1fr)] md:items-end">
         <div className="grid size-28 place-items-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-rose-neon to-lime-mute text-3xl font-black text-zinc-950">
           {user.imageUrl ? (
@@ -38,36 +38,36 @@ export function OrganizerHero({
           <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
             hosting on Sama
           </p>
-          <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
+          <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-zinc-950 sm:text-7xl">
             {displayName}
           </h1>
-          {user.username && <p className="mt-3 text-sm font-black text-rose-200">@{user.username}</p>}
-          {user.bio && <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">{user.bio}</p>}
+          {user.username && <p className="mt-3 text-sm font-black text-rose-neon">@{user.username}</p>}
+          {user.bio && <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700">{user.bio}</p>}
           <div className="mt-5 flex flex-wrap gap-2">
             {user.location && (
-              <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+              <span className="rounded-full border border-zinc-950/10 bg-white/60 px-4 py-2 text-sm font-black text-zinc-950">
                 {user.location}
               </span>
             )}
             <span className="rounded-full bg-lime-mute px-4 py-2 text-sm font-black text-zinc-950">
               {totalEvents} public events
             </span>
-            <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+            <span className="rounded-full border border-zinc-950/10 bg-white/60 px-4 py-2 text-sm font-black text-zinc-950">
               {upcomingCount} upcoming
             </span>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             {user.instagramUrl && (
-              <a href={user.instagramUrl} target="_blank" rel="noreferrer noopener" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+              <a href={user.instagramUrl} target="_blank" rel="noreferrer noopener" className="focus-ring rounded-full border border-zinc-950/10 bg-white/60 px-4 py-2 text-sm font-black text-zinc-950">
                 Instagram
               </a>
             )}
             {user.websiteUrl && (
-              <a href={user.websiteUrl} target="_blank" rel="noreferrer noopener" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+              <a href={user.websiteUrl} target="_blank" rel="noreferrer noopener" className="focus-ring rounded-full border border-zinc-950/10 bg-white/60 px-4 py-2 text-sm font-black text-zinc-950">
                 Website
               </a>
             )}
-            <Link href="/discover" className="focus-ring rounded-full bg-white/10 px-4 py-2 text-sm font-black text-white">
+            <Link href="/discover" className="focus-ring rounded-full border border-zinc-950/10 bg-white/60 px-4 py-2 text-sm font-black text-zinc-950">
               Discover more
             </Link>
           </div>

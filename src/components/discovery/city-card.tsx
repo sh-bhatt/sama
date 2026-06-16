@@ -7,7 +7,7 @@ type CityCardProps = {
 
 const cityGradients: Record<string, string> = {
   plum: "from-zinc-950 via-fuchsia-900 to-rose-500",
-  lime: "from-lime-300 via-emerald-500 to-zinc-950",
+  lime: "from-lime-200 via-emerald-400 to-teal-600",
   blue: "from-sky-400 via-blue-700 to-fuchsia-700",
 };
 

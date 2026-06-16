@@ -1,28 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050505;
-  --foreground: #f7f0df;
-  --card: #151517;
-  --muted: #a1a1aa;
-  --border: rgba(255, 255, 255, 0.12);
-  --accent: #c6ff45;
-  --accent-2: #ff2e8b;
-  --accent-contrast: #050505;
-  --stage-a: rgba(255, 46, 139, 0.14);
-  --stage-b: rgba(198, 255, 69, 0.09);
-  --stage-start: #050505;
-  --stage-mid: #0d0d0f;
-  --stage-end: #050505;
-  --editorial-bg: #09090a;
-  --editorial-foreground: #f7f0df;
-  --editorial-muted: #c9c1b1;
-  --editorial-action-bg: #f7f0df;
-  --editorial-action-fg: #050505;
-  --panel-shadow: 0 18px 70px rgba(0, 0, 0, 0.18);
-}
-
-:root.light {
   --background: #fff8ee;
   --foreground: #1f1519;
   --card: #fffdf8;
@@ -42,28 +20,6 @@
   --editorial-action-bg: #1f1519;
   --editorial-action-fg: #fff8ee;
   --panel-shadow: 0 18px 55px rgba(77, 23, 52, 0.12);
-}
-
-:root.dark {
-  --background: #050505;
-  --foreground: #f7f0df;
-  --card: #151517;
-  --muted: #a1a1aa;
-  --border: rgba(255, 255, 255, 0.12);
-  --accent: #c6ff45;
-  --accent-2: #ff2e8b;
-  --accent-contrast: #050505;
-  --stage-a: rgba(255, 46, 139, 0.14);
-  --stage-b: rgba(198, 255, 69, 0.09);
-  --stage-start: #050505;
-  --stage-mid: #0d0d0f;
-  --stage-end: #050505;
-  --editorial-bg: #09090a;
-  --editorial-foreground: #f7f0df;
-  --editorial-muted: #c9c1b1;
-  --editorial-action-bg: #f7f0df;
-  --editorial-action-fg: #050505;
-  --panel-shadow: 0 18px 70px rgba(0, 0, 0, 0.18);
 }
 
 @theme inline {
@@ -103,13 +59,6 @@
   --shadow-glow: 0 24px 90px rgba(243, 180, 91, 0.28);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #050505;
-    --foreground: #f7f0df;
-  }
-}
-
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
@@ -135,11 +84,19 @@ body {
     linear-gradient(135deg, rgba(255, 250, 241, 0.92), rgba(253, 232, 236, 0.78));
 }
 
-.dark-stage {
+.app-surface {
   background:
     radial-gradient(circle at 20% 0%, var(--stage-a), transparent 28%),
     radial-gradient(circle at 90% 8%, var(--stage-b), transparent 25%),
     linear-gradient(180deg, var(--stage-start), var(--stage-mid) 48%, var(--stage-end));
+}
+
+.dashboard-surface {
+  background:
+    radial-gradient(circle at 14% -8%, rgba(255, 169, 126, 0.28), transparent 28rem),
+    radial-gradient(circle at 78% 2%, rgba(204, 184, 255, 0.24), transparent 24rem),
+    radial-gradient(circle at 48% 34%, rgba(255, 46, 139, 0.08), transparent 26rem),
+    linear-gradient(180deg, #fff4e4 0%, #fffaf2 42%, #fdebf0 100%);
 }
 
 .theme-panel {
@@ -168,22 +125,10 @@ body {
     linear-gradient(135deg, #fff2df 0%, #f4c6d8 45%, #e6d4ff 100%);
 }
 
-.dark .event-canvas {
-  background:
-    radial-gradient(circle at 18% 12%, rgba(255, 46, 139, 0.28), transparent 28rem),
-    radial-gradient(circle at 88% 16%, rgba(198, 255, 61, 0.14), transparent 22rem),
-    linear-gradient(135deg, #190d18 0%, #2a1125 48%, #111827 100%);
-}
-
 .event-glass {
   border: 1px solid rgba(39, 25, 35, 0.12);
   background: rgba(255, 248, 238, 0.48);
   backdrop-filter: blur(22px);
-}
-
-.dark .event-glass {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(18, 18, 24, 0.46);
 }
 
 .event-soft-panel {
@@ -193,14 +138,8 @@ body {
   backdrop-filter: blur(18px);
 }
 
-.dark .event-soft-panel {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(12, 12, 16, 0.44);
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.28);
-}
-
 .text-shadow-soft {
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.28);
+  text-shadow: 0 2px 24px rgba(77, 23, 52, 0.16);
 }
 
 .invite-studio-canvas {
@@ -208,13 +147,6 @@ body {
     radial-gradient(circle at 16% 16%, rgba(255, 46, 139, 0.2), transparent 26rem),
     radial-gradient(circle at 82% 24%, rgba(198, 255, 61, 0.12), transparent 24rem),
     linear-gradient(135deg, rgba(255, 241, 224, 0.96), rgba(235, 196, 222, 0.92));
-}
-
-.dark .invite-studio-canvas {
-  background:
-    radial-gradient(circle at 20% 18%, rgba(255, 46, 139, 0.2), transparent 28rem),
-    radial-gradient(circle at 82% 20%, rgba(198, 255, 61, 0.1), transparent 22rem),
-    linear-gradient(135deg, #160d16, #241323 48%, #111827);
 }
 
 .theme-editorial-band {

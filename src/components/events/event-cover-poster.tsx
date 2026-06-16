@@ -32,7 +32,7 @@ export function EventCoverPoster({
     return (
       <figure
         className={cn(
-          "relative aspect-[4/5] min-h-[21.5rem] overflow-hidden rounded-[1.6rem] bg-white/35 shadow-[0_30px_90px_rgba(31,11,27,0.24)] dark:bg-white/8",
+          "relative aspect-[4/5] min-h-[21.5rem] overflow-hidden rounded-[1.6rem] bg-white/35 shadow-[0_30px_90px_rgba(31,11,27,0.24)]",
           className,
         )}
       >
@@ -60,7 +60,7 @@ export function EventCoverPoster({
       {design.textureClass && <div className={cn("absolute inset-0", design.textureClass)} />}
       <div className="absolute inset-x-5 top-5 flex flex-wrap items-center justify-between gap-2">
         <span className={cn(design.badgeClass, "bg-white/70 text-zinc-950 backdrop-blur")}>{date}</span>
-        <span className={cn(design.badgeClass, "bg-black/35 text-white backdrop-blur")}>{time}</span>
+        <span className={cn(design.badgeClass, "bg-white/62 text-zinc-950 backdrop-blur")}>{time}</span>
       </div>
       <figcaption className={cn("absolute inset-x-5 bottom-5 flex flex-col", design.layoutClass)}>
         <p className="text-sm font-black uppercase tracking-[0.18em]" style={design.bodyStyle}>

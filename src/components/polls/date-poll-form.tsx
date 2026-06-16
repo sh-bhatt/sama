@@ -26,7 +26,7 @@ export function DatePollForm({ eventId }: { eventId: string }) {
 
       <div className="mt-5 grid gap-4">
         {[1, 2, 3, 4, 5, 6].map((index) => (
-          <div key={index} className="grid gap-3 rounded-2xl bg-black/30 p-4 sm:grid-cols-[1fr_1.2fr]">
+          <div key={index} className="grid gap-3 rounded-2xl border border-zinc-950/10 bg-white/52 p-4 sm:grid-cols-[1fr_1.2fr]">
             <label>
               <span className="theme-muted text-sm font-black">
                 Option {index} date{index <= 2 ? " *" : ""}

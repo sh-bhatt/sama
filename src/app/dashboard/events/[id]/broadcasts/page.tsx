@@ -8,7 +8,6 @@ import {
   toggleBroadcastPinnedAction,
 } from "@/app/dashboard/events/[id]/broadcasts/actions";
 import { BroadcastList } from "@/components/broadcasts/broadcast-list";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { formatEventDate } from "@/lib/date";
@@ -26,7 +25,7 @@ export const dynamic = "force-dynamic";
 
 function SetupMessage({ title, body }: { title: string; body: string }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -93,13 +92,12 @@ export default async function BroadcastsPage({ params, searchParams }: Broadcast
   const inviteUrl = `${origin}/invite/${event.slug}`;
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
           <div className="flex items-center gap-2">
             <Link href={`/dashboard/events/${event.id}`} className="text-sm font-black text-lime-mute">Manage</Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>

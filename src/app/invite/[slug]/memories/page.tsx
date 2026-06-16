@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { MemoryGallery } from "@/components/memories/memory-gallery";
 import { MemoryUploadForm } from "@/components/memories/memory-upload-form";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { isCloudinaryConfigured } from "@/lib/cloudinary";
 import { formatEventDate } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { eventChannel, inviteChannel } from "@/lib/realtime/events";
+import { rsvpAccessCookieName } from "@/lib/rsvp-access";
 
 type MemoriesPageProps = {
   params: Promise<{ slug: string }>;
@@ -19,7 +20,7 @@ export const dynamic = "force-dynamic";
 
 function SetupMessage() {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -49,6 +50,11 @@ export default async function MemoriesPage({ params }: MemoriesPageProps) {
   const event = await prisma.event.findUnique({
     where: { slug },
     include: {
+      host: {
+        select: {
+          clerkId: true,
+        },
+      },
       memoryPhotos: {
         where: { approved: true },
         orderBy: { createdAt: "desc" },
@@ -61,9 +67,20 @@ export default async function MemoriesPage({ params }: MemoriesPageProps) {
   }
 
   const viewerUserId = isClerkConfigured() ? (await auth()).userId : null;
+  const isOwner = Boolean(viewerUserId && event.host.clerkId === viewerUserId);
+  const accessCookie = (await cookies()).get(rsvpAccessCookieName(event.id))?.value;
+  const hasRsvpAccess =
+    isOwner ||
+    Boolean(
+      accessCookie &&
+        (await prisma.rSVP.findFirst({
+          where: { id: accessCookie, eventId: event.id },
+          select: { id: true },
+        })),
+    );
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
       <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-3">
           <Link
@@ -77,9 +94,8 @@ export default async function MemoriesPage({ params }: MemoriesPageProps) {
               channels={[inviteChannel(event.slug), eventChannel(event.id)]}
               enabled={Boolean(process.env.ABLY_API_KEY)}
               label="album live"
-              userId={viewerUserId}
+              clerkUserId={viewerUserId}
             />
-            <ThemeToggle />
           </div>
         </div>
 
@@ -90,29 +106,55 @@ export default async function MemoriesPage({ params }: MemoriesPageProps) {
                 <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
                   photo dump
                 </p>
-                <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
+                <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-zinc-950 sm:text-7xl">
                   memories from {event.title}
                 </h1>
-                <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
-                  {formatEventDate(event.eventDate)} - {event.location}. Guest photos, tiny captions,
+                <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700">
+                  {formatEventDate(event.eventDate)} - {hasRsvpAccess ? event.location : event.city || "location unlocks after RSVP"}. Guest photos, tiny captions,
                   and the room after the invite.
                 </p>
               </div>
             </section>
 
-            <MemoryGallery
-              memories={event.memoryPhotos}
-              eventTitle={event.title}
-              emptyTitle="photo dump opens here"
-              emptyBody="Add the first memory once the night starts moving."
-            />
+            {hasRsvpAccess ? (
+              <MemoryGallery
+                memories={event.memoryPhotos}
+                eventTitle={event.title}
+                emptyTitle="photo dump opens here"
+                emptyBody="Add the first memory once the night starts moving."
+              />
+            ) : (
+              <section className="theme-panel rounded-[2rem] border p-6">
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
+                  album locked
+                </p>
+                <h2 className="theme-heading mt-3 text-3xl font-black lowercase">
+                  RSVP to unlock the photo room
+                </h2>
+                <p className="theme-muted mt-3 font-semibold leading-7">
+                  Guest photos stay private to people who have joined this invite.
+                </p>
+                <Link href={`/invite/${event.slug}#rsvp-panel`} className="focus-ring theme-action mt-5 inline-flex rounded-full px-5 py-3 font-black">
+                  RSVP to unlock
+                </Link>
+              </section>
+            )}
           </div>
 
           <aside className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start">
-            <MemoryUploadForm
-              slug={event.slug}
-              cloudinaryReady={isCloudinaryConfigured()}
-            />
+            {hasRsvpAccess ? (
+              <MemoryUploadForm
+                slug={event.slug}
+                cloudinaryReady={isCloudinaryConfigured()}
+              />
+            ) : (
+              <section className="theme-panel rounded-[2rem] border p-5">
+                <p className="text-sm font-black text-rose-neon">RSVP required</p>
+                <p className="theme-muted mt-2 text-sm font-semibold leading-6">
+                  Join the room before adding memories.
+                </p>
+              </section>
+            )}
             <section className="theme-panel rounded-[2rem] border p-5">
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
                 album rules

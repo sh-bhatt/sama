@@ -41,7 +41,7 @@ export function MemoriesManagementCard({
       {memories.length ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {memories.slice(0, 6).map((memory) => (
-            <article key={memory.id} className="relative overflow-hidden rounded-2xl bg-black/35">
+            <article key={memory.id} className="relative overflow-hidden rounded-2xl border border-zinc-950/10 bg-white/58">
               <Image
                 src={memory.imageUrl}
                 alt={memory.caption || "Event memory"}
@@ -51,7 +51,7 @@ export function MemoriesManagementCard({
                 className="aspect-square w-full object-cover"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-3">
-                <p className="truncate text-xs font-black text-white">
+                <p className="truncate text-xs font-black text-zinc-950">
                   {memory.caption || memory.uploaderName || memory.uploadedBy || "memory"}
                 </p>
                 <div className="mt-2">
@@ -62,7 +62,7 @@ export function MemoriesManagementCard({
           ))}
         </div>
       ) : (
-        <p className="theme-muted mt-5 rounded-2xl bg-black/35 px-4 py-4 font-semibold">
+        <p className="theme-muted mt-5 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-4 font-semibold">
           Guest photos will appear here as the album wakes up.
         </p>
       )}

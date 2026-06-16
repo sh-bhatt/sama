@@ -20,10 +20,10 @@ type AnimatedInviteCardProps = {
 
 const themeClasses: Record<InviteTheme, string> = {
   sunset: "from-orange-500 via-rose-neon to-amber-200",
-  afterdark: "from-zinc-950 via-fuchsia-900 to-blue-500",
-  mehfil: "from-fuchsia-950 via-rose-600 to-saffron-200",
+  afterdark: "from-violet-200 via-fuchsia-300 to-sky-200",
+  mehfil: "from-fuchsia-200 via-rose-300 to-amber-100",
   neon: "from-electric via-rose-neon to-lime-mute",
-  campus: "from-lime-mute via-emerald-500 to-zinc-950",
+  campus: "from-lime-mute via-emerald-300 to-teal-200",
 };
 
 export function AnimatedInviteCard({
@@ -45,7 +45,7 @@ export function AnimatedInviteCard({
   return (
     <article
       className={cn(
-        "invite-glow group relative overflow-hidden border border-white/12 bg-zinc-950 shadow-[0_28px_110px_rgba(0,0,0,0.55)]",
+        "invite-glow group relative overflow-hidden border border-zinc-950/10 bg-white/78 shadow-[0_28px_110px_rgba(77,23,52,0.16)]",
         designStyles.cornerClass,
         compact ? "p-4 sm:p-5" : "p-4 sm:p-6 lg:p-7",
         className,
@@ -76,7 +76,7 @@ export function AnimatedInviteCard({
               <span className={cn(designStyles.badgeClass, "text-zinc-950")} style={designStyles.accentBackgroundStyle}>
                 {date}
               </span>
-              <span className={cn(designStyles.badgeClass, "bg-black/35 text-white backdrop-blur")}>
+              <span className={cn(designStyles.badgeClass, "bg-white/62 text-zinc-950 backdrop-blur")}>
                 {time}
               </span>
             </div>
@@ -108,7 +108,7 @@ export function AnimatedInviteCard({
                     "focus-ring rounded-full px-4 py-3 text-sm font-black shadow-[0_12px_40px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 active:scale-[0.98]",
                     index === 0
                       ? "text-zinc-950"
-                      : "border border-white/14 bg-white/12 text-white backdrop-blur hover:bg-white/18",
+                      : "border border-zinc-950/10 bg-white/50 text-zinc-950 backdrop-blur hover:bg-white/70",
                   )}
                   style={index === 0 ? designStyles.accentBackgroundStyle : undefined}
                 >
@@ -135,7 +135,7 @@ export function AnimatedInviteCard({
           </div>
         </div>
 
-        <div className={cn("relative min-h-64 overflow-hidden rounded-[1.7rem] border border-white/14 bg-black/28", compact ? "hidden" : "")}>
+        <div className={cn("relative min-h-64 overflow-hidden rounded-[1.7rem] border border-zinc-950/10 bg-white/35", compact ? "hidden" : "")}>
           {coverImage && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -146,7 +146,7 @@ export function AnimatedInviteCard({
           )}
           <div className={cn("absolute inset-0", designStyles.overlayClass)} />
           <div className="absolute inset-x-5 top-5 flex justify-between">
-            <span className={cn(designStyles.badgeClass, "bg-black/42 text-white backdrop-blur")}>
+            <span className={cn(designStyles.badgeClass, "bg-white/62 text-zinc-950 backdrop-blur")}>
               poster
             </span>
             <span className={cn(designStyles.badgeClass, "text-zinc-950")} style={designStyles.accentBackgroundStyle}>

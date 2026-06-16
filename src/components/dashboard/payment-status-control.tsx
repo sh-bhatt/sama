@@ -40,7 +40,7 @@ export function PaymentStatusControl({
             "focus-ring rounded-full px-3 py-1.5 text-xs font-black transition hover:-translate-y-0.5",
             paymentStatus === status
               ? "bg-lime-mute text-zinc-950"
-              : "bg-black/35 text-[color:var(--foreground)]",
+              : "border border-zinc-950/10 bg-white/58 text-[color:var(--foreground)]",
           ].join(" ")}
         >
           {status.toLowerCase().replace("_", " ")}

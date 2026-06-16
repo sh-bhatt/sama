@@ -174,7 +174,7 @@ export function GlobalGuestList({ guests }: GlobalGuestListProps) {
                   "focus-ring shrink-0 rounded-full px-4 py-2 text-sm font-black transition hover:-translate-y-0.5",
                   filter === item.key
                     ? "bg-lime-mute text-zinc-950"
-                    : "bg-black/35 text-[color:var(--foreground)]",
+                    : "border border-zinc-950/10 bg-white/58 text-[color:var(--foreground)]",
                 ].join(" ")}
               >
                 {item.label}
@@ -186,11 +186,11 @@ export function GlobalGuestList({ guests }: GlobalGuestListProps) {
         <div className="mt-5 grid gap-3">
           {visibleGuests.length ? (
             visibleGuests.map((guest) => (
-              <article key={guest.id} className="rounded-[1.5rem] bg-black/35 p-4">
+              <article key={guest.id} className="rounded-[1.5rem] border border-zinc-950/10 bg-white/58 p-4">
                 <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-xl font-black text-white">{guest.name}</h3>
+                      <h3 className="text-xl font-black text-zinc-950">{guest.name}</h3>
                       <RsvpStatusBadge status={guest.status} />
                       <ApprovalStatusBadge status={guest.approvalStatus} />
                       {guest.checkedIn && (
@@ -199,7 +199,7 @@ export function GlobalGuestList({ guests }: GlobalGuestListProps) {
                         </span>
                       )}
                       {guest.plusOne && (
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white">
+                        <span className="rounded-full border border-zinc-950/10 bg-white/60 px-3 py-1 text-xs font-black text-zinc-950">
                           +1
                         </span>
                       )}
@@ -217,42 +217,42 @@ export function GlobalGuestList({ guests }: GlobalGuestListProps) {
                   </Link>
                 </div>
 
-                <details className="mt-4 rounded-2xl bg-white/8 px-4 py-3">
+                <details className="mt-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3">
                   <summary className="cursor-pointer text-sm font-black text-lime-mute">
                     Contact, notes, and answers
                   </summary>
                   <div className="mt-4 space-y-4">
-                    <div className="grid gap-2 text-sm font-semibold text-zinc-300 sm:grid-cols-2 lg:grid-cols-4">
-                      <p className="break-words rounded-2xl bg-black/30 px-3 py-2">
+                    <div className="grid gap-2 text-sm font-semibold text-zinc-700 sm:grid-cols-2 lg:grid-cols-4">
+                      <p className="break-words rounded-2xl border border-zinc-950/10 bg-white/52 px-3 py-2">
                         <span className="block text-xs font-black uppercase tracking-[0.12em] text-zinc-500">email</span>
                         {guest.email || "no email"}
                       </p>
-                      <p className="break-words rounded-2xl bg-black/30 px-3 py-2">
+                      <p className="break-words rounded-2xl border border-zinc-950/10 bg-white/52 px-3 py-2">
                         <span className="block text-xs font-black uppercase tracking-[0.12em] text-zinc-500">phone</span>
                         {guest.phone || "no phone"}
                       </p>
-                      <p className="rounded-2xl bg-black/30 px-3 py-2">
+                      <p className="rounded-2xl border border-zinc-950/10 bg-white/52 px-3 py-2">
                         <span className="block text-xs font-black uppercase tracking-[0.12em] text-zinc-500">created</span>
                         {formatEventDateShort(guest.createdAt)}
                       </p>
-                      <p className="rounded-2xl bg-black/30 px-3 py-2">
+                      <p className="rounded-2xl border border-zinc-950/10 bg-white/52 px-3 py-2">
                         <span className="block text-xs font-black uppercase tracking-[0.12em] text-zinc-500">payment</span>
                         {guest.paymentStatus.toLowerCase().replace("_", " ")}
                       </p>
                     </div>
 
-                    <p className="rounded-2xl bg-black/30 px-4 py-3 text-sm font-bold text-zinc-300">
+                    <p className="rounded-2xl border border-zinc-950/10 bg-white/52 px-4 py-3 text-sm font-bold text-zinc-700">
                       {contactLabel(guest)}
                     </p>
 
                     {guest.note && (
-                      <p className="rounded-2xl bg-black/30 px-4 py-3 text-sm font-bold text-zinc-300">
+                      <p className="rounded-2xl border border-zinc-950/10 bg-white/52 px-4 py-3 text-sm font-bold text-zinc-700">
                         {guest.note}
                       </p>
                     )}
 
                     {guest.answers.length > 0 && (
-                      <div className="rounded-2xl bg-black/30 px-4 py-3">
+                      <div className="rounded-2xl border border-zinc-950/10 bg-white/52 px-4 py-3">
                         <p className="text-xs font-black uppercase tracking-[0.14em] text-zinc-500">RSVP answers</p>
                         <div className="mt-3 space-y-3">
                           {guest.answers.map((item) => (
@@ -260,7 +260,7 @@ export function GlobalGuestList({ guests }: GlobalGuestListProps) {
                               <p className="text-xs font-black uppercase tracking-[0.12em] text-zinc-500">
                                 {item.question.question}
                               </p>
-                              <p className="mt-1 break-words text-sm font-bold text-zinc-300">{item.answer}</p>
+                              <p className="mt-1 break-words text-sm font-bold text-zinc-700">{item.answer}</p>
                             </div>
                           ))}
                         </div>
@@ -271,7 +271,7 @@ export function GlobalGuestList({ guests }: GlobalGuestListProps) {
               </article>
             ))
           ) : (
-            <div className="rounded-[1.5rem] bg-black/35 p-5">
+            <div className="rounded-[1.5rem] border border-zinc-950/10 bg-white/58 p-5">
               <h3 className="theme-heading text-2xl font-black lowercase">no matching guests</h3>
               <p className="theme-muted mt-2 font-semibold">Try another search or filter.</p>
             </div>

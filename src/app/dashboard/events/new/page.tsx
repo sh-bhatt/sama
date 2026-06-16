@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { CreateEventForm } from "@/components/events/create-event-form";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 
 type NewEventPageProps = {
@@ -15,7 +14,7 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
 
   if (!isClerkConfigured()) {
     return (
-      <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+      <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
         <div className="mx-auto max-w-3xl">
           <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
@@ -40,7 +39,7 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
 
   if (!isDatabaseConfigured()) {
     return (
-      <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+      <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
         <div className="mx-auto max-w-3xl">
           <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -69,8 +68,8 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
     "host the room";
 
   return (
-    <main className="invite-studio-canvas min-h-screen text-zinc-950 dark:text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="invite-studio-canvas min-h-screen text-zinc-950">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -82,7 +81,6 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
             <Link href="/dashboard" className="text-sm font-black text-lime-mute">
               Dashboard
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -92,10 +90,10 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
           <Link href="/dashboard" className="text-sm font-black text-lime-mute">
             Back to dashboard
           </Link>
-          <h1 className="mt-4 max-w-3xl text-6xl font-black lowercase leading-none text-zinc-950 dark:text-white">
+          <h1 className="mt-4 max-w-3xl text-6xl font-black lowercase leading-none text-zinc-950">
             invite studio
           </h1>
-          <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700 dark:text-zinc-300">
+          <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700">
             Shape the invite like a room: poster, mood, date, place, and just enough settings to get people in.
           </p>
 

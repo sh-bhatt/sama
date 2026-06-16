@@ -39,7 +39,7 @@ export function BroadcastsManagementCard({
       <div className="mt-5 space-y-3">
         {broadcasts.length ? (
           broadcasts.map((broadcast) => (
-            <article key={broadcast.id} className="rounded-2xl bg-black/35 px-4 py-3">
+            <article key={broadcast.id} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <AudienceBadge audience={broadcast.audience} />
                 {broadcast.pinned && (
@@ -53,7 +53,7 @@ export function BroadcastsManagementCard({
             </article>
           ))
         ) : (
-          <p className="theme-muted rounded-2xl bg-black/35 px-4 py-4 font-semibold">
+          <p className="theme-muted rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-4 font-semibold">
             Post your first update when plans change.
           </p>
         )}

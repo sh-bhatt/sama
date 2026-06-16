@@ -67,7 +67,7 @@ export function ProfileCard({ user }: { user: ProfileCardUser }) {
         )}
       </div>
       {!user.publicProfile && (
-        <p className="mt-4 rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+        <p className="mt-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-bold text-zinc-700">
           Public profile is off. Guests will only see your host name.
         </p>
       )}

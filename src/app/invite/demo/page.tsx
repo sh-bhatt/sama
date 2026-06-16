@@ -1,18 +1,16 @@
 import Link from "next/link";
 import { AnimatedInviteCard } from "@/components/invite/animated-invite-card";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { demoEvent, recentActivity } from "@/lib/mock-data";
 
 export default function DemoInvitePage() {
   return (
-    <main className="dark-stage min-h-screen overflow-hidden pb-28 text-foreground lg:pb-0">
+    <main className="app-surface min-h-screen overflow-hidden pb-28 text-foreground lg:pb-0">
       <section className="mx-auto grid max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[1fr_24rem] lg:px-8 lg:py-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between gap-3">
             <Link href="/" className="focus-ring inline-flex rounded-full bg-[color:var(--card)] px-4 py-2 text-sm font-black text-[color:var(--foreground)]">
               Sama
             </Link>
-            <ThemeToggle />
           </div>
 
           <AnimatedInviteCard
@@ -55,14 +53,14 @@ export default function DemoInvitePage() {
               {demoEvent.guests.map((guest, index) => (
                 <div
                   key={guest.name}
-                  className="animate-float flex items-center gap-3 rounded-full bg-black/42 px-3 py-2"
+                  className="animate-float flex items-center gap-3 rounded-full border border-zinc-950/10 bg-white/58 px-3 py-2"
                   style={{ animationDelay: `${index * 140}ms` }}
                 >
                   <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-rose-neon to-lime-mute text-xs font-black text-zinc-950">
                     {guest.name.slice(0, 1)}
                   </span>
                   <span>
-                    <span className="block text-sm font-black text-white">{guest.name}</span>
+                    <span className="block text-sm font-black text-zinc-950">{guest.name}</span>
                     <span className="block text-xs text-zinc-400">{guest.status}</span>
                   </span>
                 </div>
@@ -71,7 +69,7 @@ export default function DemoInvitePage() {
           </section>
 
           <section className="grid gap-4 md:grid-cols-2">
-            <article className="rounded-[2rem] border border-white/10 bg-lime-mute p-6 text-zinc-950">
+            <article className="rounded-[2rem] border border-zinc-950/10 bg-lime-mute p-6 text-zinc-950">
               <p className="text-sm font-black uppercase tracking-[0.16em]">UPI contribution</p>
               <h2 className="mt-3 text-2xl font-black">{demoEvent.contribution}</h2>
             </article>
@@ -98,9 +96,9 @@ export default function DemoInvitePage() {
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-5 lg:self-start">
-          <section className="rounded-[2rem] border border-white/10 bg-zinc-950 p-5 shadow-[0_22px_80px_rgba(0,0,0,0.5)]">
+          <section className="rounded-[2rem] border border-zinc-950/10 bg-white/72 p-5 shadow-[0_22px_80px_rgba(0,0,0,0.5)]">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">rsvp</p>
-            <h2 className="mt-2 text-3xl font-black lowercase text-white">are you in?</h2>
+            <h2 className="mt-2 text-3xl font-black lowercase text-zinc-950">are you in?</h2>
             <div className="mt-5 grid gap-2">
               {["Going", "Maybe", "Not going"].map((item, index) => (
                 <button
@@ -108,7 +106,7 @@ export default function DemoInvitePage() {
                   type="button"
                   className={[
                     "focus-ring rounded-2xl px-4 py-4 text-left font-black transition active:scale-[0.98]",
-                    index === 0 ? "animate-soft-pulse bg-ivory text-zinc-950" : "bg-white/8 text-white hover:bg-white/12",
+                    index === 0 ? "animate-soft-pulse bg-ivory text-zinc-950" : "border border-zinc-950/10 bg-white/58 text-zinc-950 hover:bg-white/12",
                   ].join(" ")}
                 >
                   {item}
@@ -121,7 +119,7 @@ export default function DemoInvitePage() {
             <p className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-rose-neon">activity</p>
             <div className="space-y-3">
               {recentActivity.slice(0, 3).map((item, index) => (
-                <p key={`${item}-${index}`} className="rounded-2xl bg-black/35 px-4 py-3 text-sm font-bold text-zinc-300">
+                <p key={`${item}-${index}`} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 text-sm font-bold text-zinc-700">
                   {item}
                 </p>
               ))}
@@ -139,10 +137,10 @@ export default function DemoInvitePage() {
         </aside>
       </section>
 
-      <div className="fixed inset-x-3 bottom-3 z-40 rounded-full border border-white/10 bg-zinc-950/92 p-2 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur lg:hidden">
+      <div className="fixed inset-x-3 bottom-3 z-40 rounded-full border border-zinc-950/10 bg-white/72/92 p-2 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur lg:hidden">
         <div className="grid grid-cols-3 gap-2">
           {["Going", "Maybe", "Share"].map((item, index) => (
-            <button key={`${item}-${index}`} type="button" className={index === 0 ? "rounded-full bg-ivory px-3 py-3 text-sm font-black text-zinc-950" : "rounded-full bg-white/8 px-3 py-3 text-sm font-black text-white"}>
+            <button key={`${item}-${index}`} type="button" className={index === 0 ? "rounded-full bg-ivory px-3 py-3 text-sm font-black text-zinc-950" : "rounded-full border border-zinc-950/10 bg-white/58 px-3 py-3 text-sm font-black text-zinc-950"}>
               {item}
             </button>
           ))}

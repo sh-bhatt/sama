@@ -47,7 +47,7 @@ export function RsvpChoiceButtons({
                 : "aspect-square min-h-16 w-full max-w-[4.75rem] justify-self-center p-2.5",
               active
                 ? "border-zinc-950/20 bg-gradient-to-br text-zinc-950"
-                : "border-white/35 bg-white/42 text-zinc-950 backdrop-blur-xl hover:-translate-y-1 hover:bg-white/70 dark:border-white/12 dark:bg-white/10 dark:text-white dark:hover:bg-white/16",
+                : "border-white/35 bg-white/42 text-zinc-950 backdrop-blur-xl hover:-translate-y-1 hover:bg-white/70",
               active && choice.tone,
               choiceDisabled && "cursor-not-allowed opacity-45 hover:translate-y-0",
             )}
@@ -56,7 +56,7 @@ export function RsvpChoiceButtons({
               className={cn(
                 "leading-none",
                 size === "hero" ? "text-2xl sm:text-3xl" : "text-xl",
-                active ? "text-zinc-950" : "text-zinc-950/80 dark:text-white",
+                active ? "text-zinc-950" : "text-zinc-950/80",
               )}
               aria-hidden="true"
             >

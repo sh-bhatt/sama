@@ -30,7 +30,7 @@ export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
   return (
     <Link
       href={`/invite/${event.slug}`}
-      className={`tilt-card group min-w-0 overflow-hidden border border-white/10 bg-zinc-900 shadow-[0_22px_70px_rgba(0,0,0,0.38)] ${designStyles.cornerClass}`}
+      className={`tilt-card group min-w-0 overflow-hidden border border-zinc-950/10 bg-white/78 shadow-[0_22px_70px_rgba(77,23,52,0.16)] ${designStyles.cornerClass}`}
       style={designStyles.style}
     >
       <div className={`film-grain relative min-h-48 bg-gradient-to-br ${getPosterVariant(event)} p-5`}>
@@ -49,7 +49,7 @@ export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
             {event.category || "Social"}
           </span>
           {event.requiresApproval && (
-            <span className="rounded-full bg-black/55 px-3 py-1 text-xs font-black text-lime-200">
+            <span className="rounded-full bg-white/72 px-3 py-1 text-xs font-black text-zinc-950">
               approval
             </span>
           )}
@@ -59,23 +59,23 @@ export function OrganizerEventCard({ event }: { event: OrganizerEvent }) {
         </h3>
       </div>
       <div className="space-y-3 p-5">
-        <p className="text-sm font-black text-zinc-200">
+        <p className="text-sm font-black text-zinc-900">
           {formatDateTimeLabel(event.eventDate, event.eventTime)}
         </p>
-        <p className="text-sm font-semibold text-zinc-400">
+        <p className="text-sm font-semibold text-zinc-600">
           {event.city ? `${event.city} - ` : ""}
           {event.location}
         </p>
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-lime-200">
+          <span className="rounded-full border border-lime-600/20 bg-lime-200/70 px-3 py-1.5 text-xs font-black text-zinc-950">
             {event._count.rsvps}
             {event.capacity ? `/${event.capacity}` : ""} RSVPs
           </span>
-          <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-zinc-200">
+          <span className="rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1.5 text-xs font-black text-zinc-700">
             {event._count.interests} interested
           </span>
           {event.waitlistEnabled && (
-            <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-rose-200">
+            <span className="rounded-full border border-rose-500/20 bg-rose-100/70 px-3 py-1.5 text-xs font-black text-rose-700">
               waitlist ready
             </span>
           )}

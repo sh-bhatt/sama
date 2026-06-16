@@ -10,7 +10,7 @@ import { categories } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const inputClass =
-  "focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/60 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500 dark:border-white/10 dark:bg-white/8 dark:text-white dark:placeholder:text-zinc-500";
+  "focus-ring mt-2 w-full rounded-2xl border border-zinc-950/10 bg-white/60 px-4 py-3 font-bold text-zinc-950 placeholder:text-zinc-500";
 
 const categoryOptions = categories.filter((category) => category !== "All");
 
@@ -141,7 +141,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">invite draft</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="sm:col-span-2">
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Event title</span>
+              <span className="text-sm font-black text-zinc-700">Event title</span>
               <input
                 name="title"
                 required
@@ -153,7 +153,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Description</span>
+              <span className="text-sm font-black text-zinc-700">Description</span>
               <textarea
                 name="description"
                 value={form.description}
@@ -164,8 +164,8 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span id="cover" className="text-sm font-black text-zinc-700 dark:text-zinc-300">Event cover photo</span>
-              <span className="mt-1 block text-sm font-semibold text-zinc-600 dark:text-zinc-400">
+              <span id="cover" className="text-sm font-black text-zinc-700">Event cover photo</span>
+              <span className="mt-1 block text-sm font-semibold text-zinc-600">
                 Optional. Square or wide photos work best.
               </span>
               <input
@@ -173,7 +173,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={(event) => updateCoverImage(event.target.files?.[0] ?? null)}
-                className="focus-ring mt-3 w-full rounded-2xl border border-dashed border-zinc-950/14 bg-white/60 px-4 py-3 text-sm font-bold text-zinc-950 file:mr-4 file:rounded-full file:border-0 file:bg-lime-mute file:px-4 file:py-2 file:text-sm file:font-black file:text-zinc-950 dark:border-white/10 dark:bg-white/8 dark:text-white"
+                className="focus-ring mt-3 w-full rounded-2xl border border-dashed border-zinc-950/14 bg-white/60 px-4 py-3 text-sm font-bold text-zinc-950 file:mr-4 file:rounded-full file:border-0 file:bg-lime-mute file:px-4 file:py-2 file:text-sm file:font-black file:text-zinc-950"
               />
               {coverFileName && (
                 <span className="mt-2 block text-sm font-black text-lime-mute">
@@ -182,7 +182,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               )}
             </label>
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Date</span>
+              <span className="text-sm font-black text-zinc-700">Date</span>
               <input
                 name="eventDate"
                 type="date"
@@ -193,7 +193,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Time</span>
+              <span className="text-sm font-black text-zinc-700">Time</span>
               <input
                 name="eventTime"
                 type="time"
@@ -204,7 +204,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Location</span>
+              <span className="text-sm font-black text-zinc-700">Location</span>
               <input
                 name="location"
                 required
@@ -215,7 +215,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">City</span>
+              <span className="text-sm font-black text-zinc-700">City</span>
               <input
                 name="city"
                 value={form.city}
@@ -225,7 +225,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Category</span>
+              <span className="text-sm font-black text-zinc-700">Category</span>
               <select
                 name="category"
                 value={form.category}
@@ -241,7 +241,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               </select>
             </label>
             <label className="sm:col-span-2">
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Visibility</span>
+              <span className="text-sm font-black text-zinc-700">Visibility</span>
               <select
                 name="visibility"
                 value={form.visibility}
@@ -251,7 +251,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 <option value="public">Public</option>
                 <option value="private">Private link</option>
               </select>
-              <span className="mt-2 block text-sm font-semibold text-zinc-600 dark:text-zinc-400">
+              <span className="mt-2 block text-sm font-semibold text-zinc-600">
                 Public events can appear in Discover. Private events are visible only by link.
               </span>
             </label>
@@ -266,7 +266,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">invite mood</p>
-              <h2 className="mt-2 text-3xl font-black lowercase text-zinc-950 dark:text-white">choose the poster energy</h2>
+              <h2 className="mt-2 text-3xl font-black lowercase text-zinc-950">choose the poster energy</h2>
             </div>
             <span className={cn("w-fit rounded-full px-3 py-1 text-xs font-black", selectedTheme.accentClass)}>
               {selectedTheme.previewBadge}
@@ -286,13 +286,13 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                     "focus-ring rounded-2xl border p-2 text-left transition hover:-translate-y-0.5",
                     selected
                       ? "border-lime-mute bg-lime-mute/12 shadow-[0_18px_60px_rgba(198,255,69,0.12)]"
-                      : "border-zinc-950/10 bg-white/58 hover:border-zinc-950/35 dark:border-white/10 dark:bg-white/8 dark:hover:border-white/35",
+                      : "border-zinc-950/10 bg-white/58 hover:border-zinc-950/35",
                   )}
                 >
                   <input type="radio" name="theme" value={theme.key} checked={selected} readOnly className="sr-only" />
                   <span className={cn("block h-16 rounded-xl bg-gradient-to-br", theme.gradientClass)} />
-                  <span className="mt-2 block text-sm font-black text-zinc-950 dark:text-white">{theme.label}</span>
-                  <span className="mt-1 block text-xs font-semibold leading-5 text-zinc-600 dark:text-zinc-400">{theme.description}</span>
+                  <span className="mt-2 block text-sm font-black text-zinc-950">{theme.label}</span>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-zinc-600">{theme.description}</span>
                 </button>
               );
             })}
@@ -305,7 +305,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
           </summary>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Capacity</span>
+              <span className="text-sm font-black text-zinc-700">Capacity</span>
               <input
                 name="capacity"
                 type="number"
@@ -317,7 +317,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Duration</span>
+              <span className="text-sm font-black text-zinc-700">Duration</span>
               <select
                 name="durationHours"
                 value={form.durationHours}
@@ -332,7 +332,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               </select>
             </label>
             <label>
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">UPI ID optional</span>
+              <span className="text-sm font-black text-zinc-700">UPI ID optional</span>
               <input
                 name="upiId"
                 value={form.upiId}
@@ -342,7 +342,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               />
             </label>
             <label className="sm:col-span-2">
-              <span className="text-sm font-black text-zinc-700 dark:text-zinc-300">Payment note optional</span>
+              <span className="text-sm font-black text-zinc-700">Payment note optional</span>
               <input
                 name="paymentNote"
                 value={form.paymentNote}
@@ -351,10 +351,10 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 placeholder="INR 499 at venue"
               />
             </label>
-            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 dark:border-white/10 dark:bg-white/8">
+            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3">
               <span>
-                <span className="block font-black text-zinc-950 dark:text-white">Allow plus one</span>
-                <span className="block text-sm font-semibold text-zinc-600 dark:text-zinc-400">Guests can ask to bring someone along.</span>
+                <span className="block font-black text-zinc-950">Allow plus one</span>
+                <span className="block text-sm font-semibold text-zinc-600">Guests can ask to bring someone along.</span>
               </span>
               <input
                 name="allowPlusOne"
@@ -364,10 +364,10 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 className="size-5 accent-lime-mute"
               />
             </label>
-            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 dark:border-white/10 dark:bg-white/8">
+            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3">
               <span>
-                <span className="block font-black text-zinc-950 dark:text-white">Require guest approval</span>
-                <span className="block text-sm font-semibold text-zinc-600 dark:text-zinc-400">New Going and Maybe RSVPs wait for your nod.</span>
+                <span className="block font-black text-zinc-950">Require guest approval</span>
+                <span className="block text-sm font-semibold text-zinc-600">New Going and Maybe RSVPs wait for your nod.</span>
               </span>
               <input
                 name="requiresApproval"
@@ -377,10 +377,10 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                 className="size-5 accent-lime-mute"
               />
             </label>
-            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3 dark:border-white/10 dark:bg-white/8">
+            <label className="sm:col-span-2 flex items-center justify-between gap-4 rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-3">
               <span>
-                <span className="block font-black text-zinc-950 dark:text-white">Enable waitlist</span>
-                <span className="block text-sm font-semibold text-zinc-600 dark:text-zinc-400">When approved capacity is full, Going RSVPs can queue up.</span>
+                <span className="block font-black text-zinc-950">Enable waitlist</span>
+                <span className="block text-sm font-semibold text-zinc-600">When approved capacity is full, Going RSVPs can queue up.</span>
               </span>
               <input
                 name="waitlistEnabled"
@@ -422,7 +422,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
               <span className={cn(designStyles.badgeClass, "text-zinc-950")} style={designStyles.accentBackgroundStyle}>
                 live preview
               </span>
-              <span className={cn(designStyles.badgeClass, "bg-black/35 text-white backdrop-blur")}>
+              <span className={cn(designStyles.badgeClass, "bg-white/62 text-zinc-950 backdrop-blur")}>
                 {form.visibility === "private" ? "private link" : "discover-ready"}
               </span>
             </div>
@@ -445,12 +445,12 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
                   { key: "duration", label: durationLabel },
                   { key: "capacity", label: capacityLabel },
                 ].map((item) => (
-                  <span key={item.key} className={cn(designStyles.badgeClass, "bg-black/38 text-white backdrop-blur")}>
+                  <span key={item.key} className={cn(designStyles.badgeClass, "bg-white/62 text-zinc-950 backdrop-blur")}>
                     {item.label}
                   </span>
                 ))}
               </div>
-              <div className="mt-5 rounded-[1.3rem] border border-white/12 bg-black/30 p-4 backdrop-blur">
+              <div className="mt-5 rounded-[1.3rem] border border-zinc-950/10 bg-white/52 p-4 backdrop-blur">
                 <p className="text-xs font-black uppercase tracking-[0.16em]" style={designStyles.accentStyle}>place</p>
                 <p className="mt-1 text-sm font-black" style={designStyles.titleStyle}>{previewLocation}</p>
                 <p className="mt-3 text-xs font-bold" style={designStyles.bodyStyle}>
@@ -479,7 +479,7 @@ export function CreateEventForm({ hostName }: CreateEventFormProps) {
             <a
               key={label}
               href={href}
-              className="focus-ring rounded-[1rem] px-3 py-3 text-center text-xs font-black text-zinc-950 transition hover:bg-white/55 dark:text-white dark:hover:bg-white/12"
+              className="focus-ring rounded-[1rem] px-3 py-3 text-center text-xs font-black text-zinc-950 transition hover:bg-white/55"
             >
               {label}
             </a>

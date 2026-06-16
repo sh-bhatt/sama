@@ -6,7 +6,6 @@ import { ApprovalStatusBadge } from "@/components/dashboard/approval-status-badg
 import { QrCheckInButton } from "@/components/dashboard/qr-check-in-button";
 import { QrCodeCard } from "@/components/qr/qr-code-card";
 import { RealtimeRefresh } from "@/components/realtime/realtime-refresh";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { formatEventDate } from "@/lib/date";
@@ -30,7 +29,7 @@ function SetupMessage({
   body: string;
 }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -115,8 +114,8 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
   const origin = host ? `${protocol}://${host}` : "http://localhost:3000";
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -125,7 +124,6 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
             <Link href={`/dashboard/events/${event.id}`} className="text-sm font-black text-lime-mute">
               Manage
             </Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -136,10 +134,10 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
             <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
               entrance console
             </p>
-            <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-white sm:text-7xl">
+            <h1 className="mt-3 max-w-4xl text-5xl font-black lowercase leading-none text-zinc-950 sm:text-7xl">
               check in {event.title}
             </h1>
-            <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
+            <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-zinc-700">
               {formatEventDate(event.eventDate)} - {event.eventTime} - {event.location}
             </p>
             <div className="mt-5">
@@ -147,7 +145,7 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                 channels={[eventChannel(event.id)]}
                 enabled={Boolean(process.env.ABLY_API_KEY)}
                 label="check-in live"
-                userId={currentUser.clerkUser?.id}
+                clerkUserId={currentUser.clerkUser?.id}
               />
             </div>
           </section>
@@ -180,7 +178,7 @@ export default async function CheckInPage({ params, searchParams }: CheckInPageP
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="theme-heading text-2xl font-black">{rsvp.name}</h2>
-                          <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-black text-lime-mute">
+                          <span className="rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1 text-xs font-black text-lime-mute">
                             {rsvp.status.toLowerCase().replace("_", " ")}
                           </span>
                           <ApprovalStatusBadge status={rsvp.approvalStatus} />

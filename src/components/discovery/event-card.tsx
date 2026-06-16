@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 
 const posterVariants: Record<DiscoveryEvent["variant"], string> = {
   rose: "from-fuchsia-600 via-rose-500 to-orange-300",
-  lime: "from-lime-300 via-emerald-500 to-zinc-950",
+  lime: "from-lime-200 via-emerald-400 to-teal-600",
   saffron: "from-amber-200 via-orange-500 to-red-700",
   blue: "from-sky-400 via-blue-700 to-fuchsia-700",
-  plum: "from-zinc-950 via-fuchsia-900 to-rose-500",
+  plum: "from-violet-700 via-fuchsia-600 to-rose-400",
   coral: "from-red-500 via-orange-400 to-yellow-200",
 };
 
@@ -20,7 +20,7 @@ export function EventCard({ event, wide = false, size = "default" }: EventCardPr
   return (
     <article
       className={cn(
-        "tilt-card group relative shrink-0 overflow-hidden rounded-[1.6rem] border border-white/10 bg-zinc-900 shadow-[0_22px_70px_rgba(0,0,0,0.38)]",
+        "tilt-card group relative shrink-0 overflow-hidden rounded-[1.6rem] border border-zinc-950/10 bg-white/78 shadow-[0_22px_70px_rgba(77,23,52,0.16)] backdrop-blur",
         size === "dashboard"
           ? "w-[min(82vw,320px)] sm:w-80"
           : wide
@@ -53,15 +53,15 @@ export function EventCard({ event, wide = false, size = "default" }: EventCardPr
         </div>
       </div>
       <div className="space-y-3 p-4">
-        <p className="text-sm font-bold text-zinc-200">{event.dateTime}</p>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm font-bold text-zinc-900">{event.dateTime}</p>
+        <p className="text-sm text-zinc-600">
           {event.city} · {event.location}
         </p>
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-white/8 px-3 py-1.5 text-xs font-black text-lime-200">
+          <span className="rounded-full border border-lime-600/20 bg-lime-200/70 px-3 py-1.5 text-xs font-black text-zinc-950">
             {event.interested}
           </span>
-          <span className="text-xs font-bold text-zinc-500">find the night</span>
+          <span className="text-xs font-bold text-zinc-600">find the night</span>
         </div>
       </div>
     </article>

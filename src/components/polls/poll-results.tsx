@@ -23,7 +23,7 @@ export function PollResults({ options, compact = false }: PollResultsProps) {
         const leading = option.votes === topVotes && option.votes > 0;
 
         return (
-          <article key={option.id} className="rounded-2xl bg-black/35 px-4 py-4">
+          <article key={option.id} className="rounded-2xl border border-zinc-950/10 bg-white/58 px-4 py-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="theme-heading font-black">
@@ -38,13 +38,13 @@ export function PollResults({ options, compact = false }: PollResultsProps) {
               <span
                 className={[
                   "shrink-0 rounded-full px-3 py-1 text-xs font-black",
-                  leading ? "bg-lime-mute text-zinc-950" : "bg-white/10 text-white",
+                  leading ? "bg-lime-mute text-zinc-950" : "border border-zinc-950/10 bg-white/60 text-zinc-950",
                 ].join(" ")}
               >
                 {option.votes} votes
               </span>
             </div>
-            <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-3 h-3 overflow-hidden rounded-full border border-zinc-950/10 bg-white/60">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-rose-neon to-lime-mute"
                 style={{ width: `${percentage}%` }}

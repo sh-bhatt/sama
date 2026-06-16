@@ -5,7 +5,6 @@ import {
   createRsvpQuestionAction,
   deleteRsvpQuestionAction,
 } from "@/app/dashboard/events/[id]/questions/actions";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { prisma } from "@/lib/prisma";
@@ -22,7 +21,7 @@ export const dynamic = "force-dynamic";
 
 function SetupMessage({ title, body }: { title: string; body: string }) {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -67,13 +66,12 @@ export default async function QuestionsPage({ params, searchParams }: QuestionsP
   }
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] bg-white/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">Sama</Link>
           <div className="flex items-center gap-2">
             <Link href={`/dashboard/events/${event.id}`} className="text-sm font-black text-lime-mute">Manage</Link>
-            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -105,7 +103,7 @@ export default async function QuestionsPage({ params, searchParams }: QuestionsP
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full bg-black/35 px-3 py-1 text-xs font-black text-lime-mute">
+                        <span className="rounded-full border border-zinc-950/10 bg-white/58 px-3 py-1 text-xs font-black text-lime-mute">
                           {question.type.toLowerCase().replace("_", " ")}
                         </span>
                         {question.required && (

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SignUp } from "@clerk/nextjs";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isClerkConfigured } from "@/lib/auth/config";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +12,10 @@ const clerkAppearance = {
     headerTitle: "text-[color:var(--foreground)]",
     headerSubtitle: "text-[color:var(--muted)]",
     socialButtonsBlockButton:
-      "border-[color:var(--border)] bg-[color:var(--background)] text-[color:var(--foreground)]",
+      "border-[color:var(--border)] app-surface text-[color:var(--foreground)]",
     formFieldLabel: "text-[color:var(--foreground)]",
     formFieldInput:
-      "border-[color:var(--border)] bg-[color:var(--background)] text-[color:var(--foreground)]",
+      "border-[color:var(--border)] app-surface text-[color:var(--foreground)]",
     footerActionText: "text-[color:var(--muted)]",
     footerActionLink: "text-[color:var(--accent-2)]",
     formButtonPrimary:
@@ -26,7 +25,7 @@ const clerkAppearance = {
 
 export default function SignUpPage() {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-5 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-5 text-foreground sm:px-6">
       <div className="mx-auto flex min-h-[calc(100vh-2.5rem)] w-full max-w-6xl flex-col">
         <header className="flex items-center justify-between gap-3">
           <Link href="/" className="text-2xl font-black lowercase tracking-tight">
@@ -39,7 +38,6 @@ export default function SignUpPage() {
             <Link href="/sign-in" className="focus-ring rounded-full bg-[color:var(--card)] px-3 py-2 text-sm font-black text-[color:var(--foreground)] sm:px-4">
               Sign in
             </Link>
-            <ThemeToggle />
           </div>
         </header>
 

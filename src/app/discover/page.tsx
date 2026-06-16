@@ -6,7 +6,6 @@ import { DiscoverFilters } from "@/components/discovery/discover-filters";
 import { DiscoverEventCard } from "@/components/discovery/discover-event-card";
 import { DiscoverSection } from "@/components/discovery/discover-section";
 import { EmptyDiscoverState } from "@/components/discovery/empty-discover-state";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { isClerkConfigured, isDatabaseConfigured } from "@/lib/auth/config";
 import { getApprovedGoingCount, type PublicDiscoveryEvent } from "@/lib/discover";
 import { prisma } from "@/lib/prisma";
@@ -40,7 +39,7 @@ function getTrendingScore(event: PublicDiscoveryEvent) {
 
 function SetupMessage() {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -63,7 +62,7 @@ function SetupMessage() {
 
 function DatabaseError() {
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
+    <main className="app-surface min-h-screen overflow-x-hidden px-4 py-6 text-foreground sm:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="theme-panel rounded-[2rem] border p-6 sm:p-8">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-rose-neon">
@@ -174,8 +173,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
   const upcoming = events.slice(0, 12);
 
   return (
-    <main className="dark-stage min-h-screen overflow-x-hidden text-foreground">
-      <header className="border-b border-[color:var(--border)] bg-[color:var(--background)]/72 backdrop-blur-xl">
+    <main className="app-surface min-h-screen overflow-x-hidden text-foreground">
+      <header className="border-b border-[color:var(--border)] app-surface/72 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-2xl font-black lowercase text-[color:var(--foreground)]">
             Sama
@@ -206,20 +205,19 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 </Link>
               </>
             )}
-            <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <section className="film-grain relative overflow-hidden border-b border-[color:var(--border)] bg-[radial-gradient(circle_at_18%_20%,rgba(255,46,139,0.34),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(198,255,69,0.18),transparent_22%),linear-gradient(135deg,rgba(0,0,0,0.92),rgba(22,22,22,0.9))] px-4 py-12 sm:px-6 lg:px-8">
+      <section className="film-grain relative overflow-hidden border-b border-zinc-950/10 bg-[radial-gradient(circle_at_18%_20%,rgba(255,46,139,0.24),transparent_26%),radial-gradient(circle_at_82%_20%,rgba(198,255,69,0.2),transparent_22%),linear-gradient(135deg,#fff4df,#f8d7e5_52%,#eee0ff)] px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <p className="text-sm font-black uppercase tracking-[0.18em] text-lime-mute">
             public rooms across india
           </p>
-          <h1 className="mt-4 max-w-4xl text-6xl font-black lowercase leading-none text-white sm:text-8xl">
+          <h1 className="mt-4 max-w-4xl text-6xl font-black lowercase leading-none text-zinc-950 sm:text-8xl">
             find your next gathering
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-zinc-300">
+          <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-zinc-700">
             College nights, cafe gigs, creator meetups, art walks, food trails, and open rooms worth leaving home for.
           </p>
         </div>
