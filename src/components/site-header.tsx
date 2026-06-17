@@ -16,8 +16,8 @@ export function SiteHeader() {
           <Link href="/#features" className="transition hover:text-plum-900">
             Features
           </Link>
-          <Link href="/invite/demo" className="transition hover:text-plum-900">
-            Demo Invite
+          <Link href="/discover" className="transition hover:text-plum-900">
+            Discover
           </Link>
           <Link href="/dashboard" className="transition hover:text-plum-900">
             Host Dashboard

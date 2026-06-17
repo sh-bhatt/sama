@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { ClientUserButton } from "@/components/auth/client-user-button";
 import { CategoryPills } from "@/components/discovery/category-pills";
 import { CityCard } from "@/components/discovery/city-card";
 import { DiscoverSection } from "@/components/discovery/discover-section";
@@ -101,7 +101,7 @@ export default async function Home() {
                   Dashboard
                 </Link>
                 <div className="hidden sm:block">
-                  <UserButton />
+                  <ClientUserButton />
                 </div>
               </>
             ) : (

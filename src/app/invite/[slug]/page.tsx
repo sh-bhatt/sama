@@ -220,10 +220,10 @@ export default async function InvitePage({ params }: InvitePageProps) {
               connect Neon to open live invites
             </h1>
             <p className="theme-muted mt-4 font-semibold leading-7">
-              Public demo invites still work, but live invite links need DATABASE_URL.
+              Live invite links need DATABASE_URL. You can still browse public event discovery.
             </p>
-            <Link href="/invite/demo" className="focus-ring theme-action mt-6 inline-flex rounded-full px-5 py-3 font-black">
-              Open demo invite
+            <Link href="/discover" className="focus-ring theme-action mt-6 inline-flex rounded-full px-5 py-3 font-black">
+              Browse discover
             </Link>
           </div>
         </div>

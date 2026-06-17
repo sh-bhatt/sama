@@ -58,7 +58,7 @@ Live demo: _coming soon_
 - `/invite/[slug]` - public invite, RSVP, poll, and memory teaser
 - `/invite/[slug]/memories` - public event memories album and upload form
 - `/u/[username]` - public organizer profile
-- `/invite/demo` and `/invite/demo/memories` - static demo pages
+- `/invite/demo` and `/invite/demo/memories` - redirects to discovery; real invites use `/invite/[slug]`
 - `/api/events/[id]/calendar` - public `.ics` calendar export
 - `/api/realtime/token` - Ably token endpoint
 

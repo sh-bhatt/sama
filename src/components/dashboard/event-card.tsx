@@ -40,10 +40,10 @@ export function EventCard({ title, date, location, rsvps, status }: EventCardPro
             Copy link
           </button>
           <Link
-            href="/invite/demo"
+            href="/discover"
             className="rounded-full bg-plum-900 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-plum-800"
           >
-            Manage
+            Discover
           </Link>
         </div>
       </div>

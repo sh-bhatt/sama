@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { ClientUserButton } from "@/components/auth/client-user-button";
 import { DiscoverFilters } from "@/components/discovery/discover-filters";
 import { DiscoverEventCard } from "@/components/discovery/discover-event-card";
 import { DiscoverSection } from "@/components/discovery/discover-section";
@@ -187,7 +187,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
           <div className="flex items-center gap-2">
             {userId ? (
               <div className="hidden sm:block">
-                <UserButton />
+                <ClientUserButton />
               </div>
             ) : (
               <>
